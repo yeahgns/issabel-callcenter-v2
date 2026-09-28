@@ -228,3 +228,11 @@
   .ccx .live input:checked ~ .live-dot { animation: none; }
   .ccx .dist span { transition: none; }
 }
+
+#ccx-painel h1, #ccx-painel h2 { color: var(--ink); font-family: var(--font); margin: 0; }
+#ccx-painel dt { font-weight: 400; }
+#ccx-painel label { margin: 0; }
+#ccx-painel .btn { height: auto; line-height: 1.2; margin: 0; box-shadow: none; text-shadow: none; white-space: nowrap; vertical-align: middle; }
+#ccx-painel .btn:hover, #ccx-painel .btn:focus { color: #fff; }
+#ccx-painel .btn.ghost:hover, #ccx-painel .btn.ghost:focus { color: var(--ink); }
+#ccx-painel .btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
