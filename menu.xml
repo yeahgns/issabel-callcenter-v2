@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module>
+  <menulist>
+    <menuitem menuid="ccx_painel" desc="Painel" parent="call_center" module="yes" link="" order="0"></menuitem>
+  </menulist>
+</module>
