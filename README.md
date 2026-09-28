@@ -19,8 +19,8 @@ O acesso segue as permissões do Issabel: só quem tem o menu Painel liberado v�
 
 ```bash
 cd /usr/src
-git clone https://github.com/SEU_USUARIO/issabel-callcenter-plus.git
-cd issabel-callcenter-plus
+git clone https://github.com/yeahgns/issabel-callcenter-v2.git
+cd issabel-callcenter-v2
 bash install.sh
 ```
 
