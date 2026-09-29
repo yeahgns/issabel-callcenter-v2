@@ -29,6 +29,13 @@ if [ -d "$WEB/agent_console" ]; then
     mkdir -p "$CONSOLE_PANELS"
     /bin/cp -rf modules/agent_console_panel/ccxa "$CONSOLE_PANELS/"
     chown -R asterisk:asterisk "$CONSOLE_PANELS/ccxa"
+    # Tela de login: o framework carrega sozinho todo .js/.css destas pastas (inclusive no login,
+    # onde os painéis ainda não existem). Só adicionamos arquivos nossos, sem editar os do console.
+    THEME="$WEB/agent_console/themes/default"
+    mkdir -p "$THEME/js" "$THEME/css"
+    /bin/cp -f modules/agent_console_panel/login/ccxa-login.js "$THEME/js/"
+    /bin/cp -f modules/agent_console_panel/login/ccxa-login.css "$THEME/css/"
+    chown asterisk:asterisk "$THEME/js/ccxa-login.js" "$THEME/css/ccxa-login.css"
 else
     echo "   Aviso: agent_console não encontrado; a casca do console não foi instalada."
 fi
