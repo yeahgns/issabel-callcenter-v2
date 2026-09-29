@@ -20,12 +20,13 @@
 
   // Garante o CSS da casca no <head>, independentemente de quando o conteúdo do painel
   // é escrito no corpo. Idempotente: não injeta duas vezes.
-  (function injectCss() {
+  function injectCss() {
     if (!CFG.css || document.getElementById('ccxa-css')) return;
     var l = document.createElement('link');
     l.id = 'ccxa-css'; l.rel = 'stylesheet'; l.href = CFG.css;
     document.head.appendChild(l);
-  })();
+  }
+  injectCss();
 
   // Elementos do motor de que a casca depende. Se faltar um, aborta e deixa o console como está.
   var ENGINE = {
@@ -176,6 +177,10 @@
   }
 
   function boot() {
+    // Este arquivo é injetado no <head>; a configuração é escrita no corpo da página,
+    // depois dele. Por isso relemos aqui, quando a página já está montada.
+    CFG = window.CCXA_CFG || CFG;
+    injectCss();
     for (var k in ENGINE) {
       if (!$(ENGINE[k])) return; // estrutura inesperada: não mexe em nada
     }
