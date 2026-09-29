@@ -18,8 +18,8 @@ ROOTPW=$(grep -E '^mysqlrootpwd=' /etc/issabel.conf 2>/dev/null | cut -d= -f2- |
 say "Instalando Call Center Plus $VERSION"
 
 say "Copiando módulos para $WEB"
-/bin/cp -rf modules/ccx_common modules/ccx_painel "$WEB/"
-chown -R asterisk:asterisk "$WEB/ccx_common" "$WEB/ccx_painel"
+/bin/cp -rf modules/ccx_common modules/ccx_painel modules/ccx_campanhas "$WEB/"
+chown -R asterisk:asterisk "$WEB/ccx_common" "$WEB/ccx_painel" "$WEB/ccx_campanhas"
 
 say "Instalando a casca do Console do Agente (painel ccxa)"
 # O agent_console injeta automaticamente todo .js de panels/*/js/ e chama a classe
@@ -43,7 +43,7 @@ fi
 say "Aplicando migração do banco (tabelas ccx_*, pausa Preview, proteção de campanhas preview)"
 MYSQL_PWD="$ROOTPW" mysql -uroot --default-character-set=utf8mb4 call_center < setup/ccx_schema.sql
 
-say "Registrando o menu Call Center > Painel"
+say "Registrando os menus Call Center > Painel e Campanhas"
 mkdir -p "$SHARE"
 /bin/cp -f menu.xml VERSION "$SHARE/"
 issabel-menumerge "$SHARE/menu.xml"
