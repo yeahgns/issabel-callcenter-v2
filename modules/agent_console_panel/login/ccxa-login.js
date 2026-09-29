@@ -51,7 +51,6 @@
     return out || (msg ? 'Não foi possível entrar.' : '');
   }
 
-  // "PJSIP/210 - Guilherme" -> { name: "Guilherme", ext: "210" }
   function parseOption(text) {
     var m = String(text).match(/^\s*[A-Za-z0-9]+\/(\S+)\s*-\s*(.+?)\s*$/);
     return m ? { ext: m[1], name: m[2] } : { ext: '', name: String(text).trim() };
@@ -102,8 +101,7 @@
         '<label class="field"><span>Senha</span>' +
           '<input type="password" id="ccxl-pass" autocomplete="current-password"></label>' +
         '<div class="status" id="ccxl-status" role="status" aria-live="polite" hidden></div>' +
-        '<button type="submit" class="ccxl-btn" id="ccxl-go">Entrar</button>' +
-        '<p class="hint">A senha é a definida para o seu ramal em Callback Extensions.</p>' +
+        '<button type="submit" class="ccxl-btn" id="ccxl-go">Entrar</button>'
       '</form>';
     form.parentNode.insertBefore(root, form);
 
