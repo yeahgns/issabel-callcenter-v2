@@ -33,14 +33,14 @@
 .ccxl select:hover, .ccxl input[type="password"]:hover { border-color: var(--faint); }
 .ccxl select:focus, .ccxl input[type="password"]:focus { border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px var(--brand-soft); }
 .ccxl select:disabled, .ccxl input:disabled { background-color: var(--paper); color: var(--muted); }
-.ccxl .btn {
+.ccxl .ccxl-btn {
   display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; margin: 4px 0 0;
   padding: 10px 18px; border: 0; border-radius: 8px; background: var(--brand); color: #fff;
   font-family: var(--font); font-size: 15px; font-weight: 600; line-height: 1.2; cursor: pointer; box-shadow: none; text-shadow: none;
 }
-.ccxl .btn:hover { background: var(--brand-ink); }
-.ccxl .btn:disabled { opacity: .6; cursor: wait; }
-.ccxl .btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.ccxl .ccxl-btn:hover { background: var(--brand-ink); }
+.ccxl .ccxl-btn:disabled { opacity: .6; cursor: wait; }
+.ccxl .ccxl-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .ccxl .status { display: flex; align-items: flex-start; gap: 9px; margin: 0 0 14px; padding: 10px 12px; border-radius: 8px; font-size: 14px; line-height: 1.4; }
 .ccxl .status.wait { background: var(--brand-soft); color: var(--brand-ink); }
 .ccxl .status.error { background: var(--lost-bg); color: #8E222A; }
@@ -52,3 +52,28 @@
 @keyframes ccxl-spin { to { transform: rotate(360deg); } }
 .ccxl .hint { font-size: 12.5px; color: var(--faint); margin: 14px 0 0; line-height: 1.45; }
 @media (prefers-reduced-motion: reduce) { .ccxl .spin { animation: none; } }
+
+/* ---------- blindagem contra o tema do Issabel ----------
+   O tema (e personalizações dele) estiliza select, input, label e .btn diretamente, mudando
+   altura, padding e box-sizing. Estas regras usam o id da tela com !important só nas
+   propriedades de tamanho e forma, para os campos ficarem sempre alinhados ao cartão. */
+#ccxl-root, #ccxl-root * { box-sizing: border-box !important; }
+#ccxl-root .card { max-width: 420px !important; }
+#ccxl-root .field { display: block !important; width: 100% !important; margin: 0 0 16px !important; padding: 0 !important; font-weight: 400 !important; }
+#ccxl-root .field span { display: block !important; margin: 0 0 6px !important; font-size: 13px !important; font-weight: 500 !important; color: var(--muted) !important; }
+#ccxl-root select,
+#ccxl-root input[type="password"] {
+  display: block !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+  height: 42px !important; min-height: 42px !important; margin: 0 !important;
+  padding: 0 12px !important; border: 1px solid var(--line) !important; border-radius: 8px !important;
+  font-family: var(--font) !important; font-size: 15px !important; line-height: 40px !important; font-weight: 400 !important;
+  color: var(--ink) !important; background-color: var(--surface) !important; box-shadow: none !important;
+}
+#ccxl-root select { padding-right: 34px !important; }
+#ccxl-root select:focus, #ccxl-root input[type="password"]:focus { border-color: var(--brand) !important; box-shadow: 0 0 0 3px var(--brand-soft) !important; }
+#ccxl-root .ccxl-btn {
+  display: flex !important; width: 100% !important; max-width: 100% !important; height: 44px !important; min-height: 44px !important;
+  margin: 4px 0 0 !important; padding: 0 18px !important; border: 0 !important; border-radius: 8px !important;
+  font-family: var(--font) !important; font-size: 15px !important; line-height: 1.2 !important; font-weight: 600 !important;
+  color: #fff !important; box-shadow: none !important; text-shadow: none !important; float: none !important;
+}
