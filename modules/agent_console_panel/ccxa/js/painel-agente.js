@@ -33,7 +33,9 @@
     state:     '#issabel-callcenter-estado-agente',
     stateText: '#issabel-callcenter-estado-agente-texto',
     timer:     '#issabel-callcenter-cronometro',
-    contenido: '#issabel-callcenter-contenido',       // abas Information + Script
+    contenido: '#issabel-callcenter-contenido',       // container antigo (fica escondido)
+    info:      '#issabel-callcenter-llamada-info',     // miolo da ficha (tabela de atributos)
+    script:    '#issabel-callcenter-llamada-script',   // miolo do roteiro
     form:      '#issabel-callcenter-llamada-form',     // abas de Form
     btnSave:   '#btn_guardar_formularios',
     btnHangup: '#btn_hangup',
@@ -99,7 +101,7 @@
 
   /* Lê o telefone e o nome da ficha nativa (Information), sem depender da ordem dos campos. */
   function readCard() {
-    var c = $(ENGINE.contenido);
+    var c = $(ENGINE.info);
     var out = { phone: '', name: '' };
     if (!c) return out;
     var rows = c.querySelectorAll('tr');
@@ -108,10 +110,47 @@
       if (cells.length < 2) return;
       var label = cells[0].textContent.replace(/\s+/g, ' ').replace(/:$/, '').trim().toLowerCase();
       var val = cells[1].textContent.trim();
-      if (/phone|tel[ee]fono|n[ue]mero/.test(label) && !out.phone) out.phone = val;
+      var kind = tr.getAttribute('data-ccxa');
+      if (kind === 'phone' && !out.phone) { out.phone = val; return; }
+      if (kind === 'name' && !out.name) { out.name = val; return; }
+      if (kind) return;
+      if (/phone|tel[eé]fono|n[uú]mero/.test(label) && !out.phone) out.phone = val;
       if (/^name|nombre|nome/.test(label) && !out.name) out.name = val;
     });
     return out;
+  }
+
+  /* Marca cada linha da ficha pelo rótulo (o motor recria a tabela a cada ligação),
+     para o CSS destacar nome/telefone no cabeçalho e rebaixar o ID interno. */
+  function tagCardRows() {
+    var c = $(ENGINE.info);
+    if (!c) return;
+    c.querySelectorAll('tr').forEach(function (tr) {
+      var cell = tr.querySelector('td, th');
+      if (!cell || tr.hasAttribute('data-ccxa')) return;
+      var label = cell.textContent.replace(/\s+/g, ' ').replace(/:\s*$/, '').trim().toLowerCase();
+      var kind = /call id|id de llamada|internal|id interno/.test(label) ? 'callid'
+               : /campa/.test(label) ? 'campaign'
+               : /phone|tel[eé]fon/.test(label) ? 'phone'
+               : /^name|nombre|nome/.test(label) ? 'name'
+               : 'attr';
+      tr.setAttribute('data-ccxa', kind);
+      var PT = { campaign: 'Campanha', callid: 'ID interno da ligação', phone: 'Telefone', name: 'Nome' };
+      var lab = cell.querySelector('label') || cell;
+      var txt = PT[kind] || lab.textContent.replace(/:\s*$/, '').trim();
+      if (lab.textContent !== txt) lab.textContent = txt;
+    });
+    // rótulos do formulário sem os dois-pontos (só exibição; o motor lê os campos pelo id)
+    var f = $(ENGINE.form);
+    if (f) f.querySelectorAll('td > label').forEach(function (l) {
+      var t = l.textContent.replace(/:\s*$/, '').trim();
+      if (l.textContent !== t) l.textContent = t;
+    });
+  }
+
+  function hasScript() {
+    var s = $(ENGINE.script);
+    return !!(s && s.textContent.replace(/\s+/g, '').length);
   }
 
   function boot() {
@@ -125,7 +164,9 @@
     mo.observe($(ENGINE.state), { attributes: true, attributeFilter: ['class'] });
     mo.observe($(ENGINE.stateText), { childList: true, characterData: true, subtree: true });
     mo.observe($(ENGINE.timer), { childList: true, characterData: true, subtree: true });
-    mo.observe($(ENGINE.contenido), { childList: true, subtree: true });
+    mo.observe($(ENGINE.info), { childList: true, subtree: true, characterData: true });
+    mo.observe($(ENGINE.script), { childList: true, subtree: true, characterData: true });
+    mo.observe($(ENGINE.form), { childList: true });
     ['#shift-stat-login', '#shift-stat-break', '#shift-stat-hold'].forEach(function (sel) {
       var node = $(sel);
       if (node) mo.observe(node, { childList: true, characterData: true, subtree: true });
@@ -166,13 +207,22 @@
         '<div class="bar-who" id="ccxa-who" hidden></div>' +
       '</div>' +
       '<div class="stage">' +
-        '<div class="call-card" id="ccxa-callcard">' +
+        '<div id="ccxa-callcard">' +
           '<div class="call-grid">' +
-            '<div class="who-box" id="ccxa-cardhost"></div>' +
-            '<div class="form-box" id="ccxa-formhost"><div class="form-title">Registro da ligação</div>' +
-              '<div id="ccxa-formslot"></div>' +
-              '<div class="form-actions" id="ccxa-savehost"></div>' +
+            '<div class="col">' +
+              '<section class="panel">' +
+                '<div class="client-head"><div class="client-name" id="ccxa-cname">Cliente</div>' +
+                  '<div class="client-phone" id="ccxa-cphone"></div></div>' +
+                '<div class="card-facts" id="ccxa-cardhost"></div>' +
+              '</section>' +
+              '<section class="panel" id="ccxa-scriptpanel"><h2>Roteiro</h2>' +
+                '<div class="script-body" id="ccxa-scripthost"></div></section>' +
             '</div>' +
+            '<section class="panel form-panel"><h2>Registro da ligação</h2>' +
+              '<p class="panel-sub">Preencha e salve antes de encerrar o atendimento.</p>' +
+              '<div class="form-body" id="ccxa-formslot"></div>' +
+              '<div class="form-actions" id="ccxa-savehost"></div>' +
+            '</section>' +
           '</div>' +
           '<div class="actions" id="ccxa-actions">' +
             '<span class="act-host danger" id="ccxa-host-hangup"></span>' +
@@ -199,7 +249,8 @@
     el.shLogin = $('#ccxa-sh-login'); el.shBreak = $('#ccxa-sh-break'); el.shHold = $('#ccxa-sh-hold');
 
     // Move os blocos nativos para dentro do layout. Feito uma vez; o motor segue atualizando o conteudo.
-    adopt('contenido', ENGINE.contenido, $('#ccxa-cardhost'));
+    adopt('info',      ENGINE.info,      $('#ccxa-cardhost'));
+    adopt('script',    ENGINE.script,    $('#ccxa-scripthost'));
     adopt('form',      ENGINE.form,      $('#ccxa-formslot'));
     adopt('btnSave',   ENGINE.btnSave,   $('#ccxa-savehost'));
 
@@ -211,6 +262,7 @@
     relabel(ENGINE.btnHangup, 'Desligar');
     relabel(ENGINE.btnHold, 'Colocar em espera');
     relabel('#btn_transfer', 'Transferir');
+    relabel(ENGINE.btnSave, 'Salvar registro');
     el.break.addEventListener('click', function () { clickEngine(ENGINE.btnBreak); });
     el.logout.addEventListener('click', function () {
       if (confirm('Encerrar a sessão do console?')) clickEngine(ENGINE.btnLogout);
@@ -250,6 +302,12 @@
     if (totalBox) totalBox.style.display = barShowsTotal ? 'none' : 'flex';
 
     var card = readCard();
+    tagCardRows();
+    var cname = $('#ccxa-cname'), cphone = $('#ccxa-cphone');
+    if (cname) cname.textContent = card.name || (card.phone ? (phoneBR(card.phone) || card.phone) : 'Cliente');
+    if (cphone) cphone.textContent = card.name && card.phone ? (phoneBR(card.phone) || card.phone) : '';
+    var sp = $('#ccxa-scriptpanel');
+    if (sp) sp.hidden = !hasScript();
     var hasCall = (info.key === 'oncall' || info.key === 'hold' || info.key === 'ringing');
     if (hasCall && (card.phone || card.name)) {
       el.who.hidden = false;
@@ -286,7 +344,7 @@
   function ready() {
     var tries = 0;
     var iv = setInterval(function () {
-      if ($(ENGINE.area) && $(ENGINE.btnHangup) && $(ENGINE.contenido)) { clearInterval(iv); boot(); }
+      if ($(ENGINE.area) && $(ENGINE.btnHangup) && $(ENGINE.info)) { clearInterval(iv); boot(); }
       else if (++tries > 60) clearInterval(iv); // ~30s; senao desiste e deixa o console original
     }, 500);
   }
