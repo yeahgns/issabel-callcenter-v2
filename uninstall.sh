@@ -6,7 +6,8 @@ set -euo pipefail
 ROOTPW=$(grep -E '^mysqlrootpwd=' /etc/issabel.conf | cut -d= -f2-)
 
 issabel-menuremove ccx_painel || true
-rm -rf /var/www/html/modules/ccx_painel /var/www/html/modules/ccx_common /usr/share/issabel/module_installer/ccx
+issabel-menuremove ccx_campanhas || true
+rm -rf /var/www/html/modules/ccx_painel /var/www/html/modules/ccx_campanhas /var/www/html/modules/ccx_common /usr/share/issabel/module_installer/ccx
 # Casca do Console do Agente
 rm -rf /var/www/html/modules/agent_console/panels/ccxa
 rm -f /var/www/html/modules/agent_console/themes/default/js/ccxa-login.js /var/www/html/modules/agent_console/themes/default/css/ccxa-login.css
