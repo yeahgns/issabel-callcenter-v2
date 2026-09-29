@@ -18,6 +18,25 @@
 
   var CFG = window.CCXA_CFG || {};
 
+  // Anti-flash: este arquivo roda no <head>, antes de a página ser desenhada. Escondemos a
+  // área do console até a casca montar. opacity não pode ser desfeita pelos elementos internos
+  // (o layout do jQuery força visibility:visible nas molduras). Se a casca não montar em 4s,
+  // a área volta a aparecer do jeito original: a agente nunca fica sem tela.
+  function removeAntiFlash() {
+    ['ccxa-antiflash-js', 'ccxa-antiflash'].forEach(function (id) {
+      var e = document.getElementById(id);
+      if (e && e.parentNode) e.parentNode.removeChild(e);
+    });
+  }
+  (function antiFlash() {
+    if (document.getElementById('ccxa-antiflash-js')) return;
+    var st = document.createElement('style');
+    st.id = 'ccxa-antiflash-js';
+    st.textContent = '#issabel-callcenter-area-principal{opacity:0!important}';
+    (document.head || document.documentElement).appendChild(st);
+    setTimeout(function () { if (!document.getElementById('ccxa-root')) removeAntiFlash(); }, 4000);
+  })();
+
   // Garante o CSS da casca no <head>, independentemente de quando o conteúdo do painel
   // é escrito no corpo. Idempotente: não injeta duas vezes.
   function injectCss() {
@@ -186,6 +205,7 @@
     }
     if (!buildShell()) return;
     document.body.classList.add('ccxa-on');
+    removeAntiFlash();
 
     var mo = new MutationObserver(sync);
     mo.observe($(ENGINE.state), { attributes: true, attributeFilter: ['class'] });
@@ -377,10 +397,12 @@
   /* Espera o motor estar com a sessao ativa montada (area principal + botoes existem). */
   function ready() {
     var tries = 0;
+    function attempt() { return $(ENGINE.area) && $(ENGINE.btnHangup) && $(ENGINE.info); }
+    if (attempt()) { boot(); return; }
     var iv = setInterval(function () {
-      if ($(ENGINE.area) && $(ENGINE.btnHangup) && $(ENGINE.info)) { clearInterval(iv); boot(); }
-      else if (++tries > 60) clearInterval(iv); // ~30s; senao desiste e deixa o console original
-    }, 500);
+      if (attempt()) { clearInterval(iv); boot(); }
+      else if (++tries > 300) { clearInterval(iv); removeAntiFlash(); } // ~30s: desiste e mostra o original
+    }, 100);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready);
