@@ -102,7 +102,7 @@
         '<label class="field"><span>Senha</span>' +
           '<input type="password" id="ccxl-pass" autocomplete="current-password"></label>' +
         '<div class="status" id="ccxl-status" role="status" aria-live="polite" hidden></div>' +
-        '<button type="submit" class="btn" id="ccxl-go">Entrar</button>' +
+        '<button type="submit" class="ccxl-btn" id="ccxl-go">Entrar</button>' +
         '<p class="hint">A senha é a definida para o seu ramal em Callback Extensions.</p>' +
       '</form>';
     form.parentNode.insertBefore(root, form);
