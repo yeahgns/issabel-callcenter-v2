@@ -70,6 +70,14 @@
     return d;
   }
 
+  // Troca o rótulo de um botão do motor preservando o elemento e seus eventos.
+  function relabel(sel, text) {
+    var b = $(sel);
+    if (!b) return;
+    var span = b.querySelector('.ui-button-text');
+    if (span) span.textContent = text; else b.textContent = text;
+  }
+
   function clickEngine(sel) {
     var b = $(sel);
     if (b && !b.disabled) { b.click(); return true; }
@@ -153,9 +161,9 @@
             '</div>' +
           '</div>' +
           '<div class="actions" id="ccxa-actions">' +
-            '<button type="button" class="act danger" id="ccxa-hangup">Desligar</button>' +
-            '<button type="button" class="act" id="ccxa-hold">Colocar em espera</button>' +
-            '<button type="button" class="act" id="ccxa-transfer">Transferir</button>' +
+            '<span class="act-host danger" id="ccxa-host-hangup"></span>' +
+            '<span class="act-host" id="ccxa-host-hold"></span>' +
+            '<span class="act-host" id="ccxa-host-transfer"></span>' +
           '</div>' +
         '</div>' +
         '<div class="idle-card" id="ccxa-idle" hidden></div>' +
@@ -177,9 +185,14 @@
     adopt('form',      ENGINE.form,      $('#ccxa-formslot'));
     adopt('btnSave',   ENGINE.btnSave,   $('#ccxa-savehost'));
 
-    $('#ccxa-hangup').addEventListener('click', function () { clickEngine(ENGINE.btnHangup); });
-    $('#ccxa-hold').addEventListener('click', function () { clickEngine(ENGINE.btnHold); });
-    $('#ccxa-transfer').addEventListener('click', function () { clickEngine('#btn_transfer'); });
+    // Adota os botões reais do motor: quem a agente clica É o botão do console, então
+    // o clique é o nativo (não reencaminhado). Só damos a eles a nossa aparência.
+    adopt('btnHangup',   ENGINE.btnHangup, $('#ccxa-host-hangup'));
+    adopt('btnHold',     ENGINE.btnHold,   $('#ccxa-host-hold'));
+    adopt('btnTransfer', '#btn_transfer',  $('#ccxa-host-transfer'));
+    relabel(ENGINE.btnHangup, 'Desligar');
+    relabel(ENGINE.btnHold, 'Colocar em espera');
+    relabel('#btn_transfer', 'Transferir');
     el.break.addEventListener('click', function () { clickEngine(ENGINE.btnBreak); });
     el.logout.addEventListener('click', function () {
       if (confirm('Encerrar a sessão do console?')) clickEngine(ENGINE.btnLogout);
@@ -206,10 +219,10 @@
       el.who.hidden = true;
     }
 
-    var hold = $('#ccxa-hold');
+    var hold = $(ENGINE.btnHold);
     if (hold) {
-      hold.classList.toggle('on', info.key === 'hold');
-      hold.textContent = info.key === 'hold' ? 'Retomar' : 'Colocar em espera';
+      hold.classList.toggle('ccxa-on-hold', info.key === 'hold');
+      relabel(ENGINE.btnHold, info.key === 'hold' ? 'Retomar' : 'Colocar em espera');
     }
     el.break.classList.toggle('on', info.key === 'break');
     el.break.textContent = info.key === 'break' ? 'Sair da pausa' : 'Pausa';
