@@ -50,6 +50,7 @@ class CcxLiveProvider
         }
         $consola->desconectarTodo();
 
+        $this->attachSessions($agents);
         $this->trackSince($agents);
         foreach ($queues as $num => $q) {
             $queues[$num]['agents'] = $this->countStates($agents, $num);
@@ -264,6 +265,25 @@ class CcxLiveProvider
             );
         }
         return $out;
+    }
+
+    /* Sessão atual e total logado hoje, pela tabela audit (mesma conta do console). */
+    private function attachSessions(array &$agents)
+    {
+        if (!$agents) return;
+        try {
+            require_once dirname(__FILE__) . '/sessions.php';
+            $map = ccx_agent_sessions(ccx_pdo('cc', $this->cfg), $this->now);
+        } catch (Exception $e) {
+            $this->warn('Tempos de sessão indisponíveis: ' . $e->getMessage());
+            return;
+        }
+        foreach ($agents as $chan => &$a) {
+            $m = isset($map[$chan]) ? $map[$chan] : null;
+            $a['session_start'] = ($m && $a['status'] !== 'offline') ? $m['session_start'] : null;
+            $a['day_login_sec'] = $m ? $m['day_sec'] : 0;
+        }
+        unset($a);
     }
 
     /* ---------------- auxiliares ---------------- */
