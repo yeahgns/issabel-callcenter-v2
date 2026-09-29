@@ -1,0 +1,54 @@
+/* Issabel Call Center Plus - tela de login do Agent Console.
+   Instalado em modules/agent_console/themes/default/css/ (carregado pelo framework).
+   Tudo escopado em .ccxl para não afetar o resto do console. */
+.ccxl {
+  --brand: #1F93FF; --brand-ink: #0A63C2; --brand-soft: #E7F2FF;
+  --ink: #0F2740; --muted: #5A6B80; --faint: #8B9AAD;
+  --line: #E2E8F0; --line-soft: #EEF2F7; --paper: #F3F6FA; --surface: #FFFFFF;
+  --ok: #0F9D6B; --lost: #D6404A; --lost-bg: #FCEBEC;
+  --font: 'Kantumruy Pro', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
+  font-family: var(--font); color: var(--ink); text-align: left;
+  display: flex; justify-content: center; padding: 48px 16px 56px;
+}
+.ccxl *, .ccxl *::before, .ccxl *::after { box-sizing: border-box; }
+.ccxl .card {
+  width: 100%; max-width: 420px; margin: 0; padding: 28px 28px 22px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(15, 39, 64, .08);
+}
+#ccxl-root h1 { font-family: var(--font); font-size: 21px; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; color: var(--ink); margin: 0; }
+.ccxl .lead { font-size: 14.5px; color: var(--muted); margin: 6px 0 22px; line-height: 1.45; }
+.ccxl .field { display: block; margin: 0 0 16px; }
+.ccxl .field span { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+.ccxl select, .ccxl input[type="password"] {
+  display: block; width: 100%; min-height: 42px; margin: 0; padding: 9px 12px;
+  font-family: var(--font); font-size: 15px; color: var(--ink);
+  background-color: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: none;
+}
+.ccxl select {
+  -webkit-appearance: none; appearance: none; padding-right: 34px; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235A6B80' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-size: 14px; background-position: right 12px center;
+}
+.ccxl select:hover, .ccxl input[type="password"]:hover { border-color: var(--faint); }
+.ccxl select:focus, .ccxl input[type="password"]:focus { border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px var(--brand-soft); }
+.ccxl select:disabled, .ccxl input:disabled { background-color: var(--paper); color: var(--muted); }
+.ccxl .btn {
+  display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; margin: 4px 0 0;
+  padding: 10px 18px; border: 0; border-radius: 8px; background: var(--brand); color: #fff;
+  font-family: var(--font); font-size: 15px; font-weight: 600; line-height: 1.2; cursor: pointer; box-shadow: none; text-shadow: none;
+}
+.ccxl .btn:hover { background: var(--brand-ink); }
+.ccxl .btn:disabled { opacity: .6; cursor: wait; }
+.ccxl .btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.ccxl .status { display: flex; align-items: flex-start; gap: 9px; margin: 0 0 14px; padding: 10px 12px; border-radius: 8px; font-size: 14px; line-height: 1.4; }
+.ccxl .status.wait { background: var(--brand-soft); color: var(--brand-ink); }
+.ccxl .status.error { background: var(--lost-bg); color: #8E222A; }
+.ccxl .status[hidden] { display: none; }
+.ccxl .spin {
+  flex: none; width: 15px; height: 15px; margin-top: 2px; border-radius: 50%;
+  border: 2px solid rgba(10, 99, 194, .25); border-top-color: var(--brand-ink); animation: ccxl-spin .8s linear infinite;
+}
+@keyframes ccxl-spin { to { transform: rotate(360deg); } }
+.ccxl .hint { font-size: 12.5px; color: var(--faint); margin: 14px 0 0; line-height: 1.45; }
+@media (prefers-reduced-motion: reduce) { .ccxl .spin { animation: none; } }
