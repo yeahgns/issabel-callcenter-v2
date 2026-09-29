@@ -247,7 +247,7 @@
     // esconde o "Total" quando a barra ja esta mostrando o proprio total (estado disponivel)
     var barShowsTotal = (info.key !== 'break' && info.key !== 'oncall' && info.key !== 'hold' && info.key !== 'ringing');
     var totalBox = el.total ? el.total.parentNode : null;
-    if (totalBox) totalBox.style.visibility = barShowsTotal ? 'hidden' : 'visible';
+    if (totalBox) totalBox.style.display = barShowsTotal ? 'none' : 'flex';
 
     var card = readCard();
     var hasCall = (info.key === 'oncall' || info.key === 'hold' || info.key === 'ringing');
