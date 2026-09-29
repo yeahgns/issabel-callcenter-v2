@@ -128,6 +128,7 @@
 .ccx .dot { flex: none; width: 10px; height: 10px; border-radius: 50%; }
 .ccx .who b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ccx .who span { display: block; font-size: 12.5px; color: var(--muted); }
+.ccx .who span span { display: inline; font-size: inherit; }
 .ccx .agent.offline .who b { color: var(--muted); font-weight: 500; }
 .ccx .state { min-width: 0; }
 .ccx .state b { font-weight: 600; font-size: 14.5px; }
@@ -144,7 +145,7 @@
 }
 .ccx .today { text-align: right; font-size: 13.5px; }
 .ccx .today b { display: block; font-weight: 600; }
-.ccx .today span { color: var(--muted); font-size: 12.5px; }
+.ccx .today span { display: block; color: var(--muted); font-size: 12.5px; }
 
 /* ---------- filas (o destaque) ---------- */
 .ccx .queues { display: flex; flex-direction: column; gap: 12px; }
@@ -229,6 +230,10 @@
   .ccx .dist span { transition: none; }
 }
 
+/* ---------- blindagem contra o tema do Issabel ----------
+   O tema (Neon/Bootstrap) estiliza elementos soltos: cor própria em h1/h2, dt em negrito,
+   margem em label, e em .btn texto escuro no hover e sombra ao clicar. Estas regras usam o
+   id do painel para vencer as do tema sem afetar o resto da página do Issabel. */
 #ccx-painel h1, #ccx-painel h2 { color: var(--ink); font-family: var(--font); margin: 0; }
 #ccx-painel dt { font-weight: 400; }
 #ccx-painel label { margin: 0; }
