@@ -15,6 +15,30 @@
  */
 class Panel_Ccxa
 {
+    /*
+     * action=ccxa_session&rawmode=yes -> início da sessão aberta e total logado hoje,
+     * para a agente desta sessão do console. Roda dentro da sessão logada do motor.
+     */
+    public static function handleJSON_session($module_name, $smarty, $local_templates_dir, $oPaloConsola, $estado)
+    {
+        $out = array('ok' => false, 'now' => time(), 'session_start' => null, 'day_sec' => null);
+        try {
+            require_once 'modules/ccx_common/libs/bootstrap.php';
+            require_once 'modules/ccx_common/libs/sessions.php';
+            $chan = isset($_SESSION['callcenter']['agente']) ? (string) $_SESSION['callcenter']['agente'] : '';
+            $map = ccx_agent_sessions(ccx_pdo('cc'));
+            if ($chan !== '' && isset($map[$chan])) {
+                $out['session_start'] = $map[$chan]['session_start'];
+                $out['day_sec'] = $map[$chan]['day_sec'];
+            }
+            $out['ok'] = true;
+        } catch (Exception $e) {
+            $out['error'] = 'Sessão indisponível';
+        }
+        if (!headers_sent()) header('Content-Type: application/json; charset=UTF-8');
+        return json_encode($out, JSON_UNESCAPED_UNICODE);
+    }
+
     public static function templateContent($module_name, $smarty, $local_templates_dir, $oPaloConsola, $estado)
     {
         $base = 'modules/' . $module_name . '/panels/ccxa';
