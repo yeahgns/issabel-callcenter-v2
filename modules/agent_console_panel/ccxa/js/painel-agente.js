@@ -54,7 +54,7 @@
 
   var el = {};                 // nós que a casca cria
   var origin = {};             // onde cada bloco movido estava, para devolver se preciso
-  var S = { key: 'idle', shownMode: null };
+  var S = { key: 'idle', shownMode: null, sessStart: null, offset: 0 };
 
   function $(s, c) { return (c || document).querySelector(s); }
   function esc(s) {
@@ -90,6 +90,28 @@
     if (!target) return;
     var node = document.querySelector(sel);
     if (node) { var v = node.textContent.trim(); if (v) target.textContent = v; }
+  }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function hms(sec) {
+    sec = Math.max(0, Math.floor(sec));
+    return pad2(Math.floor(sec / 3600)) + ':' + pad2(Math.floor(sec % 3600 / 60)) + ':' + pad2(sec % 60);
+  }
+  function sessionStr() {
+    if (!S.sessStart) return '';
+    return hms(Date.now() / 1000 + S.offset - S.sessStart);
+  }
+  /* Início da sessão aberta, lido da tabela audit pelo nosso painel (action=ccxa_session). */
+  function loadSession(tries) {
+    if (!CFG.api) return;
+    fetch(CFG.api + '&action=ccxa_session', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) throw new Error('sessao');
+        S.offset = j.now - Date.now() / 1000;
+        S.sessStart = j.session_start || null;
+        sync();
+      })
+      .catch(function () { if ((tries || 0) < 3) setTimeout(function () { loadSession((tries || 0) + 1); }, 5000); });
   }
   function isZero(s) { return !s || /^0?0:00:00$/.test(s.trim()); }
 
@@ -172,6 +194,8 @@
       if (node) mo.observe(node, { childList: true, characterData: true, subtree: true });
     });
     sync();
+    loadSession(0);
+    setInterval(function () { if (S.sessStart) sync(); }, 1000);
   }
 
   /* Move um bloco do motor para dentro de um destino nosso, lembrando de onde veio. */
@@ -233,7 +257,8 @@
         '<div class="idle-card" id="ccxa-idle" hidden></div>' +
       '</div>' +
       '<div class="session">' +
-        '<span class="shift login" title="Tempo total de sessão (inclui pausa e ligações)"><span class="dot"></span><span class="lbl">Total</span> <span class="val" id="ccxa-sh-login">00:00:00</span></span>' +
+        '<span class="shift sess" title="Desde o último login no console"><span class="dot" style="background:var(--brand)"></span><span class="lbl">Sessão atual</span> <span class="val" id="ccxa-sh-sess">--:--:--</span></span>' +
+        '<span class="shift login" title="Soma de todas as sessões de hoje (inclui pausas e ligações)"><span class="dot"></span><span class="lbl">Total do dia</span> <span class="val" id="ccxa-sh-login">00:00:00</span></span>' +
         '<span class="shift break" title="Tempo total em pausa"><span class="dot"></span><span class="lbl">Pausa</span> <span class="val" id="ccxa-sh-break">00:00:00</span></span>' +
         '<span class="shift hold" title="Tempo total em espera"><span class="dot"></span><span class="lbl">Espera</span> <span class="val" id="ccxa-sh-hold">00:00:00</span></span>' +
         '<span class="spacer"></span>' +
@@ -246,7 +271,7 @@
     el.timer = $('#ccxa-timer'); el.total = $('#ccxa-total'); el.who = $('#ccxa-who');
     el.callcard = $('#ccxa-callcard'); el.idle = $('#ccxa-idle');
     el.actions = $('#ccxa-actions'); el.break = $('#ccxa-break'); el.logout = $('#ccxa-logout');
-    el.shLogin = $('#ccxa-sh-login'); el.shBreak = $('#ccxa-sh-break'); el.shHold = $('#ccxa-sh-hold');
+    el.shSess = $('#ccxa-sh-sess'); el.shLogin = $('#ccxa-sh-login'); el.shBreak = $('#ccxa-sh-break'); el.shHold = $('#ccxa-sh-hold');
 
     // Move os blocos nativos para dentro do layout. Feito uma vez; o motor segue atualizando o conteudo.
     adopt('info',      ENGINE.info,      $('#ccxa-cardhost'));
@@ -293,9 +318,13 @@
     var barTime;
     if (info.key === 'break') barTime = breakStr;
     else if (info.key === 'oncall' || info.key === 'hold' || info.key === 'ringing') barTime = (callStr && callStr !== '00:00:00') ? callStr : loginStr;
-    else barTime = loginStr;
+    else barTime = sessionStr() || loginStr;
     el.timer.textContent = barTime || callStr || '00:00:00';
-    if (el.total) el.total.textContent = loginStr || '00:00:00';
+    var sess = sessionStr();
+    if (el.shSess) el.shSess.textContent = sess || '--:--:--';
+    var totalLbl = el.total ? el.total.parentNode.querySelector('.bar-total-lbl') : null;
+    if (el.total) el.total.textContent = sess || loginStr || '00:00:00';
+    if (totalLbl) totalLbl.textContent = sess ? 'Sessão atual' : 'Total do dia';
     // esconde o "Total" quando a barra ja esta mostrando o proprio total (estado disponivel)
     var barShowsTotal = (info.key !== 'break' && info.key !== 'oncall' && info.key !== 'hold' && info.key !== 'ringing');
     var totalBox = el.total ? el.total.parentNode : null;
