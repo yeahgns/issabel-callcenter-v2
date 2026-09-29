@@ -84,6 +84,13 @@
     return false;
   }
 
+  function mirror(sel, target) {
+    if (!target) return;
+    var node = document.querySelector(sel);
+    if (node) { var v = node.textContent.trim(); if (v) target.textContent = v; }
+  }
+  function isZero(s) { return !s || /^0?0:00:00$/.test(s.trim()); }
+
   function currentState() {
     var node = $(ENGINE.state);
     if (node) for (var cls in STATE_MAP) if (node.classList.contains(cls)) return STATE_MAP[cls];
@@ -119,6 +126,10 @@
     mo.observe($(ENGINE.stateText), { childList: true, characterData: true, subtree: true });
     mo.observe($(ENGINE.timer), { childList: true, characterData: true, subtree: true });
     mo.observe($(ENGINE.contenido), { childList: true, subtree: true });
+    ['#shift-stat-login', '#shift-stat-break', '#shift-stat-hold'].forEach(function (sel) {
+      var node = $(sel);
+      if (node) mo.observe(node, { childList: true, characterData: true, subtree: true });
+    });
     sync();
   }
 
@@ -169,6 +180,9 @@
         '<div class="idle-card" id="ccxa-idle" hidden></div>' +
       '</div>' +
       '<div class="session">' +
+        '<span class="shift login" title="Tempo total logado"><span class="dot"></span><span class="lbl">Logado</span> <span class="val" id="ccxa-sh-login">00:00:00</span></span>' +
+        '<span class="shift break" title="Tempo total em pausa"><span class="dot"></span><span class="lbl">Pausa</span> <span class="val" id="ccxa-sh-break">00:00:00</span></span>' +
+        '<span class="shift hold" title="Tempo total em espera"><span class="dot"></span><span class="lbl">Espera</span> <span class="val" id="ccxa-sh-hold">00:00:00</span></span>' +
         '<span class="spacer"></span>' +
         '<button type="button" class="btn-break" id="ccxa-break">Pausa</button>' +
         '<button type="button" class="btn-logout" id="ccxa-logout">Encerrar sessão</button>' +
@@ -179,6 +193,7 @@
     el.timer = $('#ccxa-timer'); el.who = $('#ccxa-who');
     el.callcard = $('#ccxa-callcard'); el.idle = $('#ccxa-idle');
     el.actions = $('#ccxa-actions'); el.break = $('#ccxa-break'); el.logout = $('#ccxa-logout');
+    el.shLogin = $('#ccxa-sh-login'); el.shBreak = $('#ccxa-sh-break'); el.shHold = $('#ccxa-sh-hold');
 
     // Move os blocos nativos para dentro do layout. Feito uma vez; o motor segue atualizando o conteudo.
     adopt('contenido', ENGINE.contenido, $('#ccxa-cardhost'));
@@ -206,8 +221,19 @@
     el.bar.className = 'bar st-' + info.key;
     el.label.textContent = info.label;
     el.sub.textContent = info.sub;
-    var t = $(ENGINE.timer);
-    el.timer.textContent = t ? t.textContent.trim() : '00:00:00';
+    // Espelha os medidores de jornada do motor (login/pausa/espera).
+    mirror('#shift-stat-login', el.shLogin);
+    mirror('#shift-stat-break', el.shBreak);
+    mirror('#shift-stat-hold', el.shHold);
+    if (el.shBreak) el.shBreak.parentNode.classList.toggle('zero', isZero(el.shBreak.textContent));
+    if (el.shHold) el.shHold.parentNode.classList.toggle('zero', isZero(el.shHold.textContent));
+
+    // Cronometro da barra: tempo DA LIGACAO quando em ligacao; senao, tempo total logado.
+    var callTimer = $(ENGINE.timer);
+    var callStr = callTimer ? callTimer.textContent.trim() : '';
+    var loginStr = el.shLogin ? el.shLogin.textContent.trim() : '';
+    var onCall = (info.key === 'oncall' || info.key === 'hold' || info.key === 'ringing');
+    el.timer.textContent = (onCall && callStr && callStr !== '00:00:00') ? callStr : (loginStr || callStr || '00:00:00');
 
     var card = readCard();
     var hasCall = (info.key === 'oncall' || info.key === 'hold' || info.key === 'ringing');
