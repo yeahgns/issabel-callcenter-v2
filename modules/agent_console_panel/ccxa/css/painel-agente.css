@@ -38,7 +38,7 @@ body.ccxa-on #issabel-callcenter-estado-agente { position: absolute; left: -9999
 
 /* cabecalho */
 .ccxa .top { display: flex; align-items: baseline; gap: 10px; margin: 2px 2px 14px; }
-.ccxa .top h1 { font-size: 18px; font-weight: 700; }
+.ccxa .top h1, #ccxa-root .top h1 { font-size: 18px; font-weight: 700; color: var(--ink); font-family: var(--font); margin: 0; }
 .ccxa .top .sub { color: var(--muted); font-size: 14px; margin-left: auto; }
 
 /* barra de estado */
@@ -60,67 +60,103 @@ body.ccxa-on #issabel-callcenter-estado-agente { position: absolute; left: -9999
 .ccxa .bar-who { text-align: right; font-size: 13px; opacity: .95; }
 .ccxa .bar-who b { display: block; font-weight: 600; font-size: 15px; }
 
-/* palco */
+/* palco (mesma linguagem visual do relatório de ligações: .panel, .facts, filtros) */
 .ccxa .stage { margin-top: 18px; }
-.ccxa .call-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
-.ccxa .call-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: start; }
-.ccxa .idle-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 48px 24px; text-align: center; }
+.ccxa .call-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.ccxa .col { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.ccxa .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin: 0; }
+.ccxa .panel h2 { font-size: 15px; font-weight: 600; padding: 16px 18px 4px; margin: 0; color: var(--ink); font-family: var(--font); }
+.ccxa .panel .panel-sub { font-size: 13px; color: var(--muted); padding: 0 18px 12px; margin: 0; }
+.ccxa .idle-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 48px 24px; text-align: center; }
 .ccxa .idle-card .big { font-size: 22px; font-weight: 700; color: var(--ok); }
 .ccxa .idle-card.paused .big { color: var(--lost); }
 .ccxa .idle-card p { color: var(--muted); margin-top: 6px; font-size: 14.5px; }
 
-/* ---- ficha do cliente (bloco #issabel-callcenter-contenido movido para ca) ---- */
-.ccxa .who-box { min-width: 0; }
-/* neutraliza as abas jQuery UI do bloco de conteudo, deixando so a ficha limpa */
-.ccxa #issabel-callcenter-contenido,
-.ccxa #issabel-callcenter-contenido .ui-tabs,
-.ccxa #issabel-callcenter-contenido .ui-widget-content { background: none; border: 0; padding: 0; }
-.ccxa #issabel-callcenter-contenido .ui-tabs-nav { background: none; border: 0; padding: 0 0 10px; margin: 0; display: flex; gap: 6px; }
-.ccxa #issabel-callcenter-contenido .ui-tabs-nav li { list-style: none; background: var(--paper); border: 1px solid var(--line); border-radius: 8px 8px 0 0; margin: 0; }
-.ccxa #issabel-callcenter-contenido .ui-tabs-nav li.ui-tabs-active { background: var(--surface); border-bottom-color: var(--surface); }
-.ccxa #issabel-callcenter-contenido .ui-tabs-nav a { color: var(--muted); font-weight: 600; font-size: 13px; padding: 6px 12px; text-decoration: none; float: none; }
-.ccxa #issabel-callcenter-contenido .ui-tabs-active a { color: var(--ink); }
-.ccxa #issabel-callcenter-contenido table { width: 100%; border-collapse: collapse; }
-.ccxa #issabel-callcenter-contenido th,
-.ccxa #issabel-callcenter-contenido td { text-align: left; vertical-align: top; padding: 7px 0; border-bottom: 1px solid var(--line-soft); }
-.ccxa #issabel-callcenter-contenido th { color: var(--muted); font-weight: 500; font-size: 13.5px; white-space: nowrap; padding-right: 16px; width: 1%; }
-.ccxa #issabel-callcenter-contenido td { font-weight: 600; font-size: 14.5px; word-break: break-word; }
+/* ---- cliente: cabeçalho + grade de fatos (miolo #issabel-callcenter-llamada-info) ---- */
+.ccxa .client-head { padding: 18px 18px 14px; border-bottom: 1px solid var(--line-soft); }
+.ccxa .client-name { font-size: 22px; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
+.ccxa .client-phone { font-size: 14.5px; color: var(--muted); margin-top: 2px; }
+.ccxa .card-facts { padding: 14px 18px 18px; }
+/* a tabela do motor vira uma grade de fatos: rótulo pequeno em cima, valor em negrito embaixo */
+.ccxa #issabel-callcenter-llamada-info { color: var(--ink) !important; }
+.ccxa #issabel-callcenter-llamada-info table,
+.ccxa #issabel-callcenter-llamada-info tbody { display: block; width: 100%; border: 0; }
+.ccxa #issabel-callcenter-llamada-info tbody { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px 28px; }
+.ccxa #issabel-callcenter-llamada-info tr { display: flex; flex-direction: column; min-width: 0; }
+.ccxa #issabel-callcenter-llamada-info td { display: block; padding: 0; border: 0; text-align: left; background: none; }
+.ccxa #issabel-callcenter-llamada-info td:first-child,
+.ccxa #issabel-callcenter-llamada-info td:first-child label { font-size: 12.5px; color: var(--muted); font-weight: 400; }
+.ccxa #issabel-callcenter-llamada-info td:last-child { font-size: 15px; font-weight: 600; word-break: break-word; }
+.ccxa #issabel-callcenter-llamada-info td a { color: var(--brand-ink); text-decoration: underline; text-underline-offset: 3px; }
+/* nome e telefone já estão no cabeçalho; o ID interno vai para o fim, discreto */
+.ccxa #issabel-callcenter-llamada-info tr[data-ccxa="name"],
+.ccxa #issabel-callcenter-llamada-info tr[data-ccxa="phone"] { display: none; }
+.ccxa #issabel-callcenter-llamada-info tr[data-ccxa="callid"] { order: 99; grid-column: 1 / -1; flex-direction: row; gap: 6px; align-items: baseline; padding-top: 10px; border-top: 1px solid var(--line-soft); }
+.ccxa #issabel-callcenter-llamada-info tr[data-ccxa="callid"] td,
+.ccxa #issabel-callcenter-llamada-info tr[data-ccxa="callid"] td label { font-size: 12px !important; color: var(--faint) !important; font-weight: 400 !important; }
+/* ligação de entrada: seletor de contato do motor */
+.ccxa #issabel-callcenter-llamada-info select { min-height: 36px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font: inherit; font-size: 14px; color: var(--ink); }
+.ccxa #issabel-callcenter-llamada-info .ui-button { margin: 6px 0 0; border-radius: 8px; }
 
-/* ---- formulario (bloco #issabel-callcenter-llamada-form movido para ca) ---- */
-.ccxa .form-box { background: var(--paper); border-radius: 12px; padding: 16px 18px; }
-.ccxa .form-title { font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 12px; }
+/* ---- roteiro (miolo #issabel-callcenter-llamada-script) ---- */
+.ccxa .script-body { padding: 4px 18px 18px; }
+.ccxa #issabel-callcenter-llamada-script { font-size: 14.5px; line-height: 1.6; color: var(--ink); }
+.ccxa #issabel-callcenter-llamada-script p { margin: 0 0 8px; }
+
+/* ---- registro da ligação (miolo #issabel-callcenter-llamada-form) ---- */
+.ccxa .form-body { padding: 4px 18px 4px; }
 .ccxa #issabel-callcenter-llamada-form,
 .ccxa #issabel-callcenter-cejillas-formulario,
-.ccxa #issabel-callcenter-cejillas-formulario .ui-widget-content { background: none; border: 0; padding: 0; }
-/* se houver mais de um form, as abas aparecem; com um so, escondemos a aba redundante */
-.ccxa #issabel-callcenter-cejillas-formulario > ul.ui-tabs-nav { background: none; border: 0; margin: 0 0 10px; padding: 0; display: flex; gap: 6px; }
-.ccxa #issabel-callcenter-cejillas-formulario > ul.ui-tabs-nav li { list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin: 0; }
-.ccxa #issabel-callcenter-cejillas-formulario > ul.ui-tabs-nav a { color: var(--muted); font-weight: 600; font-size: 13px; padding: 5px 12px; text-decoration: none; float: none; }
-.ccxa #issabel-callcenter-cejillas-formulario > ul.ui-tabs-nav li:only-child { display: none; } /* 1 form so: sem aba */
-.ccxa #issabel-callcenter-cejillas-formulario table { width: 100%; border-collapse: collapse; }
-.ccxa #issabel-callcenter-cejillas-formulario td { padding: 6px 0; vertical-align: middle; }
-.ccxa #issabel-callcenter-cejillas-formulario label { color: var(--muted); font-size: 14px; font-weight: 500; padding-right: 12px; white-space: nowrap; }
-.ccxa .issabel-callcenter-field {
-  width: 100%; min-height: 40px; padding: 8px 11px; font: inherit; font-size: 14.5px;
-  border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: var(--surface);
+.ccxa #issabel-callcenter-cejillas-formulario .ui-tabs-panel,
+.ccxa #issabel-callcenter-cejillas-formulario.ui-widget-content { background: none; border: 0; padding: 0; font-family: var(--font); }
+/* vários formulários: abas viram o controle segmentado do relatório (.seg); um só: sem aba */
+.ccxa #issabel-callcenter-cejillas-formulario > ul { display: inline-flex; gap: 2px; background: var(--line-soft); border: 0; border-radius: 9px; padding: 3px; margin: 0 0 14px; }
+.ccxa #issabel-callcenter-cejillas-formulario > ul li { list-style: none; margin: 0; border: 0; background: none; float: none; }
+.ccxa #issabel-callcenter-cejillas-formulario > ul li a { display: block; padding: 5px 12px; border-radius: 7px; font-size: 13.5px; font-weight: 500; color: var(--muted); text-decoration: none; float: none; }
+.ccxa #issabel-callcenter-cejillas-formulario > ul li.ui-tabs-active a { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(15,39,64,.12); }
+.ccxa #issabel-callcenter-cejillas-formulario > ul:has(> li:only-child) { display: none; }
+/* campos empilhados: rótulo em cima, campo embaixo */
+.ccxa #issabel-callcenter-cejillas-formulario table,
+.ccxa #issabel-callcenter-cejillas-formulario tbody { display: block; width: 100%; border: 0; }
+.ccxa #issabel-callcenter-cejillas-formulario tr { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+.ccxa #issabel-callcenter-cejillas-formulario td,
+.ccxa #issabel-callcenter-cejillas-formulario th { display: block; padding: 0; border: 0; text-align: left; background: none; }
+.ccxa #issabel-callcenter-cejillas-formulario th:empty,
+.ccxa #issabel-callcenter-cejillas-formulario tr:has(> th:empty) { display: none; }
+.ccxa #issabel-callcenter-cejillas-formulario th { font-size: 13px; color: var(--muted); font-weight: 400; }
+.ccxa #issabel-callcenter-cejillas-formulario label { font-size: 13px; color: var(--muted); font-weight: 500; }
+.ccxa .issabel-callcenter-field,
+.ccxa .issabel-callcenter-field.ui-widget-content,
+.ccxa select.issabel-callcenter-field.ui-button {
+  display: block; width: 100%; max-width: none; min-height: 38px; margin: 0; padding: 7px 12px;
+  font-family: var(--font); font-size: 14.5px; font-weight: 400; color: var(--ink); text-align: left;
+  background-color: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: none; text-shadow: none;
 }
+.ccxa select.issabel-callcenter-field,
+.ccxa select.issabel-callcenter-field.ui-button {
+  -webkit-appearance: none; appearance: none; padding-right: 32px; cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235A6B80' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-size: 14px; background-position: right 11px center;
+}
+.ccxa textarea.issabel-callcenter-field { min-height: 88px; resize: vertical; line-height: 1.5; }
+.ccxa .issabel-callcenter-field:hover { border-color: var(--faint); }
 .ccxa .issabel-callcenter-field:focus { border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px var(--brand-soft); }
-.ccxa select.issabel-callcenter-field { min-width: 180px; }
-.ccxa textarea.issabel-callcenter-field { min-height: 70px; resize: vertical; }
 
-/* Save data (botao #btn_guardar_formularios movido para ca) */
-.ccxa .form-actions { margin-top: 14px; }
+/* Save data (botão #btn_guardar_formularios adotado) */
+.ccxa .form-actions { padding: 4px 18px 18px; }
 .ccxa #btn_guardar_formularios,
 .ccxa #btn_guardar_formularios.ui-button {
-  display: inline-flex; align-items: center; min-height: 44px; padding: 10px 20px; margin: 0;
-  border-radius: 11px; background: var(--brand); color: #fff; border: 0;
-  font-size: 15px; font-weight: 600; box-shadow: none; text-shadow: none; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 7px 18px; margin: 0;
+  border-radius: 8px; background: var(--brand); color: #fff; border: 0; font-family: var(--font);
+  font-size: 14px; font-weight: 600; box-shadow: none; text-shadow: none; cursor: pointer;
 }
 .ccxa #btn_guardar_formularios:hover { background: var(--brand-ink); }
 .ccxa #btn_guardar_formularios .ui-button-text { padding: 0; color: #fff; }
+.ccxa #btn_guardar_formularios.ui-state-disabled,
+.ccxa #btn_guardar_formularios:disabled { opacity: .45; cursor: not-allowed; }
 
 /* acoes da ligacao */
-.ccxa .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line-soft); }
+.ccxa .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 /* Os botões dentro de .act-host são os botões REAIS do console (adotados), então
    estilizamos o botão nativo (jQuery UI .ui-button) em vez de um botão nosso.
    Assim o clique continua sendo o do motor. */
