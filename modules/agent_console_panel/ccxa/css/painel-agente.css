@@ -8,7 +8,13 @@
    dentro da casca; escondemos apenas os restos do layout velho. */
 body.ccxa-on #issabel-callcenter-titulo-consola,
 body.ccxa-on #issabel-callcenter-shift-bar,
-body.ccxa-on #issabel-callcenter-controles { position: absolute; left: -99999px; width: 1px; height: 1px; overflow: hidden; }
+body.ccxa-on #issabel-callcenter-controles,
+body.ccxa-on #issabel-callcenter-wrap { position: absolute !important; left: -99999px !important; top: auto !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
+/* Os blocos que a casca move para fora do wrap voltam a ser visíveis normalmente,
+   pois deixam de ser descendentes do #issabel-callcenter-wrap escondido. */
+body.ccxa-on #ccxa-root #issabel-callcenter-contenido,
+body.ccxa-on #ccxa-root #issabel-callcenter-llamada-form,
+body.ccxa-on #ccxa-root #btn_guardar_formularios { position: static !important; left: auto !important; width: auto !important; height: auto !important; overflow: visible !important; }
 /* O estado do motor a casca le, mas nao mostra na posicao antiga. */
 body.ccxa-on #issabel-callcenter-estado-agente { position: absolute; left: -99999px; width: 1px; height: 1px; overflow: hidden; }
 
@@ -110,12 +116,32 @@ body.ccxa-on #issabel-callcenter-estado-agente { position: absolute; left: -9999
 
 /* acoes da ligacao */
 .ccxa .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line-soft); }
-.ccxa .act { display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 10px 20px;
-  border-radius: 12px; font-size: 15px; font-weight: 600; border: 1px solid var(--line); color: var(--ink); background: var(--surface); }
-.ccxa .act:hover { border-color: var(--faint); }
-.ccxa .act.danger { background: var(--lost); color: #fff; border-color: transparent; }
-.ccxa .act.danger:hover { background: #B7323B; }
-.ccxa .act.on { background: var(--hold-bg); color: var(--hold); border-color: var(--hold); }
+/* Os botões dentro de .act-host são os botões REAIS do console (adotados), então
+   estilizamos o botão nativo (jQuery UI .ui-button) em vez de um botão nosso.
+   Assim o clique continua sendo o do motor. */
+.ccxa .act-host { display: inline-flex; }
+.ccxa .act-host .ui-button,
+.ccxa .act-host button,
+.ccxa .act-host input[type="button"] {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 46px; padding: 10px 20px; margin: 0;
+  border-radius: 12px; font-size: 15px; font-weight: 600;
+  border: 1px solid var(--line); color: var(--ink); background: var(--surface);
+  box-shadow: none; text-shadow: none; cursor: pointer; font-family: var(--font);
+}
+.ccxa .act-host .ui-button:hover,
+.ccxa .act-host button:hover { border-color: var(--faint); background: var(--surface); }
+.ccxa .act-host .ui-button .ui-button-text { padding: 0; }
+.ccxa .act-host.danger .ui-button,
+.ccxa .act-host.danger button { background: var(--lost); color: #fff; border-color: transparent; }
+.ccxa .act-host.danger .ui-button:hover,
+.ccxa .act-host.danger button:hover { background: #B7323B; }
+.ccxa .act-host .ccxa-on-hold,
+.ccxa .act-host .ui-button.ccxa-on-hold { background: var(--hold-bg); color: var(--hold); border-color: var(--hold); }
+/* neutraliza estados de foco/ativo herdados do jQuery UI */
+.ccxa .act-host .ui-state-hover,
+.ccxa .act-host .ui-state-focus,
+.ccxa .act-host .ui-state-active { border: 1px solid var(--line); background: var(--surface); }
 
 /* rodape de sessao */
 .ccxa .session { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
