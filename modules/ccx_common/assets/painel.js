@@ -247,8 +247,10 @@
   }
 
   function agentState(a) {
-    var st = STATE[a.status], h = '<b>' + st.label + '</b>';
+    var st = STATE[a.status];
     var elapsed = a.since ? nowSrv() - a.since : 0;
+    var timed = a.since && (a.status === 'oncall' || a.status === 'paused' || (a.status === 'free' && a.since_exact));
+    var h = '<b>' + st.label + (timed ? ' há' : '') + '</b>';
     if (a.status === 'oncall') {
       h += since(a.since);
       if (a.onhold) h += '<span class="tag">em espera</span>';
@@ -304,10 +306,11 @@
     $('ccx-agents').innerHTML = list.map(function (a) {
       return '<div class="agent ' + a.status + ' st-' + a.status + '">' +
         '<div class="who"><i class="dot s-' + a.status + '" aria-hidden="true"></i><div><b>' + esc(a.name) + '</b>' +
-          '<span>Ramal ' + esc(a.number) + '</span></div></div>' +
+          '<span>Ramal ' + esc(a.number) + (a.session_start ? ', sessão ' + since(a.session_start, 'x') : '') + '</span></div></div>' +
         '<div class="state">' + agentState(a) + '</div>' +
         '<div class="today"><b>' + plural(a.today.calls, 'ligação', 'ligações') + '</b>' +
-          '<span>' + (a.today.talk_sec ? dur(a.today.talk_sec) + ' falando' : 'hoje') + '</span></div>' +
+          '<span>' + (a.today.talk_sec ? dur(a.today.talk_sec) + ' falando' : 'hoje') + '</span>' +
+          (a.day_login_sec ? '<span>' + dur(a.day_login_sec) + ' logado hoje</span>' : '') + '</div>' +
       '</div>';
     }).join('');
   }
