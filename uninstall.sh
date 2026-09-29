@@ -7,6 +7,8 @@ ROOTPW=$(grep -E '^mysqlrootpwd=' /etc/issabel.conf | cut -d= -f2-)
 
 issabel-menuremove ccx_painel || true
 rm -rf /var/www/html/modules/ccx_painel /var/www/html/modules/ccx_common /usr/share/issabel/module_installer/ccx
+# Casca do Console do Agente
+rm -rf /var/www/html/modules/agent_console/panels/ccxa
 
 # Sem o add-on ninguém gerencia campanhas preview; libera a ativação delas.
 MYSQL_PWD="$ROOTPW" mysql -uroot call_center -e "DROP TRIGGER IF EXISTS ccx_guard_preview"
