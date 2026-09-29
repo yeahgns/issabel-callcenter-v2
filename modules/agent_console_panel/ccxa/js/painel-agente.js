@@ -1,159 +1,256 @@
 /* Issabel Call Center Plus - casca do Agent Console.
-   Fica por cima do console original. O motor continua no DOM (escondido) e funcionando;
-   esta folha esconde o visual antigo e estiliza o layout novo, incluindo os blocos
-   nativos (ficha, formulario, Save data) que o JS move para dentro da casca. */
+ *
+ * Não fala com o ECCP nem grava nada. O console original (o "motor") continua rodando
+ * e cuidando de login, eventos em tempo real, pausas, timeout, ficha do cliente e
+ * gravação dos formulários (o botão "Save data"). Esta casca só melhora a aparência:
+ *
+ *   - lê o estado que o motor mantém no DOM (#issabel-callcenter-estado-agente);
+ *   - MOVE os blocos nativos (ficha/Information+Script e os Forms+Save data) para dentro
+ *     de um layout novo, sem recriá-los, então tudo que eles fazem continua funcionando;
+ *   - reflete o estado numa barra de status e delega os cliques (Desligar/Hold/Pausa/
+ *     Encerrar/Transferir) aos botões originais escondidos.
+ *
+ * Regra de ouro: se algo esperado não existir, a casca desiste (nunca deixa a agente sem
+ * console). Ela também devolve os blocos ao lugar de origem se precisar se desligar.
+ */
+(function () {
+  'use strict';
 
-/* Esconde as partes visiveis do console antigo quando a casca esta ativa.
-   Nao usamos display:none no que foi MOVIDO (ficha/form) porque agora eles vivem
-   dentro da casca; escondemos apenas os restos do layout velho. */
-body.ccxa-on #issabel-callcenter-titulo-consola,
-body.ccxa-on #issabel-callcenter-shift-bar,
-body.ccxa-on #issabel-callcenter-controles,
-body.ccxa-on #issabel-callcenter-wrap { position: absolute !important; left: -99999px !important; top: auto !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
-/* Os blocos que a casca move para fora do wrap voltam a ser visíveis normalmente,
-   pois deixam de ser descendentes do #issabel-callcenter-wrap escondido. */
-body.ccxa-on #ccxa-root #issabel-callcenter-contenido,
-body.ccxa-on #ccxa-root #issabel-callcenter-llamada-form,
-body.ccxa-on #ccxa-root #btn_guardar_formularios { position: static !important; left: auto !important; width: auto !important; height: auto !important; overflow: visible !important; }
-/* O estado do motor a casca le, mas nao mostra na posicao antiga. */
-body.ccxa-on #issabel-callcenter-estado-agente { position: absolute; left: -99999px; width: 1px; height: 1px; overflow: hidden; }
+  var CFG = window.CCXA_CFG || {};
 
-.ccxa {
-  --brand: #1F93FF;   --brand-ink: #0A63C2;  --brand-soft: #E7F2FF;
-  --ink: #0F2740;     --muted: #5A6B80;      --faint: #8B9AAD;
-  --line: #E2E8F0;    --line-soft: #EEF2F7;  --paper: #F3F6FA;  --surface: #FFFFFF;
-  --ok: #0F9D6B;      --lost: #D6404A;       --lost-bg: #FCEBEC;
-  --hold: #C2701A;    --hold-bg: #FBF0E2;
-  --font: 'Kantumruy Pro', 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif;
-  font-family: var(--font); color: var(--ink); text-align: left;
-  font-variant-numeric: tabular-nums;
-  max-width: 1120px; margin: 10px auto 40px; padding: 0 16px;
-}
-.ccxa *, .ccxa *::before, .ccxa *::after { box-sizing: border-box; }
-.ccxa h1, .ccxa p { margin: 0; }
-.ccxa button { font: inherit; cursor: pointer; border: 0; background: none; line-height: 1.2; }
-.ccxa :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
-.ccxa [hidden] { display: none !important; }
+  // Garante o CSS da casca no <head>, independentemente de quando o conteúdo do painel
+  // é escrito no corpo. Idempotente: não injeta duas vezes.
+  (function injectCss() {
+    if (!CFG.css || document.getElementById('ccxa-css')) return;
+    var l = document.createElement('link');
+    l.id = 'ccxa-css'; l.rel = 'stylesheet'; l.href = CFG.css;
+    document.head.appendChild(l);
+  })();
 
-/* cabecalho */
-.ccxa .top { display: flex; align-items: baseline; gap: 10px; margin: 2px 2px 14px; }
-.ccxa .top h1 { font-size: 18px; font-weight: 700; }
-.ccxa .top .sub { color: var(--muted); font-size: 14px; margin-left: auto; }
+  // Elementos do motor de que a casca depende. Se faltar um, aborta e deixa o console como está.
+  var ENGINE = {
+    area:      '#issabel-callcenter-area-principal',
+    state:     '#issabel-callcenter-estado-agente',
+    stateText: '#issabel-callcenter-estado-agente-texto',
+    timer:     '#issabel-callcenter-cronometro',
+    contenido: '#issabel-callcenter-contenido',       // abas Information + Script
+    form:      '#issabel-callcenter-llamada-form',     // abas de Form
+    btnSave:   '#btn_guardar_formularios',
+    btnHangup: '#btn_hangup',
+    btnHold:   '#btn_hold',
+    btnBreak:  '#btn_togglebreak',
+    btnLogout: '#btn_logout'
+  };
 
-/* barra de estado */
-.ccxa .bar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
-  padding: 14px 20px; border-radius: 14px; color: #fff; background: var(--muted); transition: background .3s ease; }
-.ccxa .bar.st-idle    { background: linear-gradient(120deg, #0F9D6B, #0B7E56); }
-.ccxa .bar.st-ringing { background: linear-gradient(120deg, #7357D1, #5A3FB0); }
-.ccxa .bar.st-oncall  { background: linear-gradient(120deg, #1F93FF, #0A63C2); }
-.ccxa .bar.st-hold    { background: linear-gradient(120deg, #E08A2B, #C2701A); }
-.ccxa .bar.st-break   { background: linear-gradient(120deg, #D6404A, #B02730); }
-.ccxa .bar-state { min-width: 0; }
-.ccxa .bar-state b { display: block; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
-.ccxa .bar-state span { display: block; font-size: 13.5px; opacity: .9; }
-.ccxa .bar-timer { margin-left: auto; font-size: 34px; font-weight: 700; letter-spacing: -.02em; }
-.ccxa .bar-who { text-align: right; font-size: 13px; opacity: .95; }
-.ccxa .bar-who b { display: block; font-weight: 600; font-size: 15px; }
+  var STATE_MAP = {
+    'issabel-callcenter-class-estado-ocioso':    { key: 'idle',    label: 'Disponível', sub: 'Aguardando a próxima ligação da fila' },
+    'issabel-callcenter-class-estado-esperando': { key: 'ringing', label: 'Chamando',   sub: 'A fila está entregando uma ligação' },
+    'issabel-callcenter-class-estado-activo':    { key: 'oncall',  label: 'Em ligação', sub: 'Ligação em andamento' },
+    'issabel-callcenter-class-estado-hold':      { key: 'hold',    label: 'Em espera',  sub: 'Ligação em espera' },
+    'issabel-callcenter-class-estado-break':     { key: 'break',   label: 'Em pausa',   sub: 'A fila não entrega ligações durante a pausa' }
+  };
 
-/* palco */
-.ccxa .stage { margin-top: 18px; }
-.ccxa .call-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 22px; }
-.ccxa .call-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 22px; align-items: start; }
-.ccxa .idle-card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 48px 24px; text-align: center; }
-.ccxa .idle-card .big { font-size: 22px; font-weight: 700; color: var(--ok); }
-.ccxa .idle-card.paused .big { color: var(--lost); }
-.ccxa .idle-card p { color: var(--muted); margin-top: 6px; font-size: 14.5px; }
+  var el = {};                 // nós que a casca cria
+  var origin = {};             // onde cada bloco movido estava, para devolver se preciso
+  var S = { key: 'idle', shownMode: null };
 
-/* ---- ficha do cliente (bloco #issabel-callcenter-contenido movido para ca) ---- */
-.ccxa .who-box { min-width: 0; }
-/* neutraliza as abas jQuery UI do bloco de conteudo, deixando so a ficha limpa */
-.ccxa #issabel-callcenter-contenido,
-.ccxa #issabel-callcenter-contenido .ui-tabs,
-.ccxa #issabel-callcenter-contenido .ui-widget-content { background: none; border: 0; padding: 0; }
-.ccxa #issabel-callcenter-contenido .ui-tabs-nav { background: none; border: 0; padding: 0 0 10px; margin: 0; display: flex; gap: 6px; }
-.ccxa #issabel-callcenter-contenido .ui-tabs-nav li { list-style: none; background: var(--paper); border: 1px solid var(--line); border-radius: 8px 8px 0 0; margin: 0; }
-.ccxa #issabel-callcenter-contenido .ui-tabs-nav li.ui-tabs-active { background: var(--surface); border-bottom-color: var(--surface); }
-.ccxa #issabel-callcenter-contenido .ui-tabs-nav a { color: var(--muted); font-weight: 600; font-size: 13px; padding: 6px 12px; text-decoration: none; float: none; }
-.ccxa #issabel-callcenter-contenido .ui-tabs-active a { color: var(--ink); }
-.ccxa #issabel-callcenter-contenido table { width: 100%; border-collapse: collapse; }
-.ccxa #issabel-callcenter-contenido th,
-.ccxa #issabel-callcenter-contenido td { text-align: left; vertical-align: top; padding: 7px 0; border-bottom: 1px solid var(--line-soft); }
-.ccxa #issabel-callcenter-contenido th { color: var(--muted); font-weight: 500; font-size: 13.5px; white-space: nowrap; padding-right: 16px; width: 1%; }
-.ccxa #issabel-callcenter-contenido td { font-weight: 600; font-size: 14.5px; word-break: break-word; }
+  function $(s, c) { return (c || document).querySelector(s); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function phoneBR(n) {
+    var d = String(n || '').replace(/\D/g, '');
+    if (!d) return '';
+    if (/^0?800/.test(d)) { d = d.replace(/^0(?=800)/, ''); return d.slice(0, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7); }
+    if (d.length >= 12 && d.slice(0, 2) === '55') d = d.slice(2);
+    if (d.length === 11) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
+    if (d.length === 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
+    return d;
+  }
 
-/* ---- formulario (bloco #issabel-callcenter-llamada-form movido para ca) ---- */
-.ccxa .form-box { background: var(--paper); border-radius: 12px; padding: 16px 18px; }
-.ccxa .form-title { font-size: 13px; color: var(--muted); font-weight: 600; margin-bottom: 12px; }
-.ccxa #issabel-callcenter-llamada-form,
-.ccxa #issabel-callcenter-cejillas-formulario,
-.ccxa #issabel-callcenter-cejillas-formulario .ui-widget-content { background: none; border: 0; padding: 0; }
-/* se houver mais de um form, as abas aparecem; com um so, escondemos a aba redundante */
-.ccxa #issabel-callcenter-cejillas-formulario > ul.ui-tabs-nav { background: none; border: 0; margin: 0 0 10px; padding: 0; display: flex; gap: 6px; }
-.ccxa #issabel-callcenter-cejillas-formulario > ul.ui-tabs-nav li { list-style: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin: 0; }
-.ccxa #issabel-callcenter-cejillas-formulario > ul.ui-tabs-nav a { color: var(--muted); font-weight: 600; font-size: 13px; padding: 5px 12px; text-decoration: none; float: none; }
-.ccxa #issabel-callcenter-cejillas-formulario > ul.ui-tabs-nav li:only-child { display: none; } /* 1 form so: sem aba */
-.ccxa #issabel-callcenter-cejillas-formulario table { width: 100%; border-collapse: collapse; }
-.ccxa #issabel-callcenter-cejillas-formulario td { padding: 6px 0; vertical-align: middle; }
-.ccxa #issabel-callcenter-cejillas-formulario label { color: var(--muted); font-size: 14px; font-weight: 500; padding-right: 12px; white-space: nowrap; }
-.ccxa .issabel-callcenter-field {
-  width: 100%; min-height: 40px; padding: 8px 11px; font: inherit; font-size: 14.5px;
-  border: 1px solid var(--line); border-radius: 9px; color: var(--ink); background: var(--surface);
-}
-.ccxa .issabel-callcenter-field:focus { border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px var(--brand-soft); }
-.ccxa select.issabel-callcenter-field { min-width: 180px; }
-.ccxa textarea.issabel-callcenter-field { min-height: 70px; resize: vertical; }
+  // Troca o rótulo de um botão do motor preservando o elemento e seus eventos.
+  function relabel(sel, text) {
+    var b = $(sel);
+    if (!b) return;
+    var span = b.querySelector('.ui-button-text');
+    if (span) span.textContent = text; else b.textContent = text;
+  }
 
-/* Save data (botao #btn_guardar_formularios movido para ca) */
-.ccxa .form-actions { margin-top: 14px; }
-.ccxa #btn_guardar_formularios,
-.ccxa #btn_guardar_formularios.ui-button {
-  display: inline-flex; align-items: center; min-height: 44px; padding: 10px 20px; margin: 0;
-  border-radius: 11px; background: var(--brand); color: #fff; border: 0;
-  font-size: 15px; font-weight: 600; box-shadow: none; text-shadow: none; cursor: pointer;
-}
-.ccxa #btn_guardar_formularios:hover { background: var(--brand-ink); }
-.ccxa #btn_guardar_formularios .ui-button-text { padding: 0; color: #fff; }
+  function clickEngine(sel) {
+    var b = $(sel);
+    if (b && !b.disabled) { b.click(); return true; }
+    return false;
+  }
 
-/* acoes da ligacao */
-.ccxa .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line-soft); }
-/* Os botões dentro de .act-host são os botões REAIS do console (adotados), então
-   estilizamos o botão nativo (jQuery UI .ui-button) em vez de um botão nosso.
-   Assim o clique continua sendo o do motor. */
-.ccxa .act-host { display: inline-flex; }
-.ccxa .act-host .ui-button,
-.ccxa .act-host button,
-.ccxa .act-host input[type="button"] {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  min-height: 46px; padding: 10px 20px; margin: 0;
-  border-radius: 12px; font-size: 15px; font-weight: 600;
-  border: 1px solid var(--line); color: var(--ink); background: var(--surface);
-  box-shadow: none; text-shadow: none; cursor: pointer; font-family: var(--font);
-}
-.ccxa .act-host .ui-button:hover,
-.ccxa .act-host button:hover { border-color: var(--faint); background: var(--surface); }
-.ccxa .act-host .ui-button .ui-button-text { padding: 0; }
-.ccxa .act-host.danger .ui-button,
-.ccxa .act-host.danger button { background: var(--lost); color: #fff; border-color: transparent; }
-.ccxa .act-host.danger .ui-button:hover,
-.ccxa .act-host.danger button:hover { background: #B7323B; }
-.ccxa .act-host .ccxa-on-hold,
-.ccxa .act-host .ui-button.ccxa-on-hold { background: var(--hold-bg); color: var(--hold); border-color: var(--hold); }
-/* neutraliza estados de foco/ativo herdados do jQuery UI */
-.ccxa .act-host .ui-state-hover,
-.ccxa .act-host .ui-state-focus,
-.ccxa .act-host .ui-state-active { border: 1px solid var(--line); background: var(--surface); }
+  function currentState() {
+    var node = $(ENGINE.state);
+    if (node) for (var cls in STATE_MAP) if (node.classList.contains(cls)) return STATE_MAP[cls];
+    return STATE_MAP['issabel-callcenter-class-estado-ocioso'];
+  }
 
-/* rodape de sessao */
-.ccxa .session { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
-.ccxa .session .spacer { margin-left: auto; }
-.ccxa .btn-break, .ccxa .btn-logout { min-height: 40px; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--line); font-weight: 600; color: var(--muted); }
-.ccxa .btn-break:hover { border-color: var(--faint); color: var(--ink); }
-.ccxa .btn-break.on { background: var(--lost-bg); color: var(--lost); border-color: var(--lost); }
-.ccxa .btn-logout:hover { color: var(--lost); border-color: var(--lost); }
+  /* Lê o telefone e o nome da ficha nativa (Information), sem depender da ordem dos campos. */
+  function readCard() {
+    var c = $(ENGINE.contenido);
+    var out = { phone: '', name: '' };
+    if (!c) return out;
+    var rows = c.querySelectorAll('tr');
+    rows.forEach(function (tr) {
+      var cells = tr.querySelectorAll('td, th');
+      if (cells.length < 2) return;
+      var label = cells[0].textContent.replace(/\s+/g, ' ').replace(/:$/, '').trim().toLowerCase();
+      var val = cells[1].textContent.trim();
+      if (/phone|tel[ee]fono|n[ue]mero/.test(label) && !out.phone) out.phone = val;
+      if (/^name|nombre|nome/.test(label) && !out.name) out.name = val;
+    });
+    return out;
+  }
 
-@media (max-width: 720px) {
-  .ccxa .call-grid { grid-template-columns: 1fr; }
-  .ccxa .bar-timer { font-size: 28px; }
-  .ccxa .bar-who { text-align: left; }
-}
-@media (prefers-reduced-motion: reduce) { .ccxa .bar { transition: none; } }
+  function boot() {
+    for (var k in ENGINE) {
+      if (!$(ENGINE[k])) return; // estrutura inesperada: não mexe em nada
+    }
+    if (!buildShell()) return;
+    document.body.classList.add('ccxa-on');
+
+    var mo = new MutationObserver(sync);
+    mo.observe($(ENGINE.state), { attributes: true, attributeFilter: ['class'] });
+    mo.observe($(ENGINE.stateText), { childList: true, characterData: true, subtree: true });
+    mo.observe($(ENGINE.timer), { childList: true, characterData: true, subtree: true });
+    mo.observe($(ENGINE.contenido), { childList: true, subtree: true });
+    sync();
+  }
+
+  /* Move um bloco do motor para dentro de um destino nosso, lembrando de onde veio. */
+  function adopt(key, engineSel, destination) {
+    var node = $(engineSel);
+    if (!node || !destination) return;
+    origin[key] = { parent: node.parentNode, next: node.nextSibling };
+    destination.appendChild(node);
+  }
+  function restoreAll() {
+    for (var key in origin) {
+      var node = $(ENGINE[key]);
+      var o = origin[key];
+      if (node && o && o.parent) o.parent.insertBefore(node, o.next);
+    }
+  }
+
+  function buildShell() {
+    var area = $(ENGINE.area);
+    if (!area) return false;
+    var root = document.createElement('div');
+    root.className = 'ccxa';
+    root.id = 'ccxa-root';
+    root.innerHTML =
+      '<div class="top"><h1>' + esc(CFG.title || 'Console do agente') + '</h1>' +
+        '<span class="sub">' + esc(CFG.agent_name || '') + '</span></div>' +
+      '<div class="bar" id="ccxa-bar">' +
+        '<div class="bar-state"><b id="ccxa-label">-</b><span id="ccxa-sub"></span></div>' +
+        '<div class="bar-timer" id="ccxa-timer">00:00:00</div>' +
+        '<div class="bar-who" id="ccxa-who" hidden></div>' +
+      '</div>' +
+      '<div class="stage">' +
+        '<div class="call-card" id="ccxa-callcard">' +
+          '<div class="call-grid">' +
+            '<div class="who-box" id="ccxa-cardhost"></div>' +
+            '<div class="form-box" id="ccxa-formhost"><div class="form-title">Registro da ligação</div>' +
+              '<div id="ccxa-formslot"></div>' +
+              '<div class="form-actions" id="ccxa-savehost"></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="actions" id="ccxa-actions">' +
+            '<span class="act-host danger" id="ccxa-host-hangup"></span>' +
+            '<span class="act-host" id="ccxa-host-hold"></span>' +
+            '<span class="act-host" id="ccxa-host-transfer"></span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="idle-card" id="ccxa-idle" hidden></div>' +
+      '</div>' +
+      '<div class="session">' +
+        '<span class="spacer"></span>' +
+        '<button type="button" class="btn-break" id="ccxa-break">Pausa</button>' +
+        '<button type="button" class="btn-logout" id="ccxa-logout">Encerrar sessão</button>' +
+      '</div>';
+    area.appendChild(root);
+
+    el.bar = $('#ccxa-bar'); el.label = $('#ccxa-label'); el.sub = $('#ccxa-sub');
+    el.timer = $('#ccxa-timer'); el.who = $('#ccxa-who');
+    el.callcard = $('#ccxa-callcard'); el.idle = $('#ccxa-idle');
+    el.actions = $('#ccxa-actions'); el.break = $('#ccxa-break'); el.logout = $('#ccxa-logout');
+
+    // Move os blocos nativos para dentro do layout. Feito uma vez; o motor segue atualizando o conteudo.
+    adopt('contenido', ENGINE.contenido, $('#ccxa-cardhost'));
+    adopt('form',      ENGINE.form,      $('#ccxa-formslot'));
+    adopt('btnSave',   ENGINE.btnSave,   $('#ccxa-savehost'));
+
+    // Adota os botões reais do motor: quem a agente clica É o botão do console, então
+    // o clique é o nativo (não reencaminhado). Só damos a eles a nossa aparência.
+    adopt('btnHangup',   ENGINE.btnHangup, $('#ccxa-host-hangup'));
+    adopt('btnHold',     ENGINE.btnHold,   $('#ccxa-host-hold'));
+    adopt('btnTransfer', '#btn_transfer',  $('#ccxa-host-transfer'));
+    relabel(ENGINE.btnHangup, 'Desligar');
+    relabel(ENGINE.btnHold, 'Colocar em espera');
+    relabel('#btn_transfer', 'Transferir');
+    el.break.addEventListener('click', function () { clickEngine(ENGINE.btnBreak); });
+    el.logout.addEventListener('click', function () {
+      if (confirm('Encerrar a sessão do console?')) clickEngine(ENGINE.btnLogout);
+    });
+    return true;
+  }
+
+  function sync() {
+    var info = currentState();
+    S.key = info.key;
+    el.bar.className = 'bar st-' + info.key;
+    el.label.textContent = info.label;
+    el.sub.textContent = info.sub;
+    var t = $(ENGINE.timer);
+    el.timer.textContent = t ? t.textContent.trim() : '00:00:00';
+
+    var card = readCard();
+    var hasCall = (info.key === 'oncall' || info.key === 'hold' || info.key === 'ringing');
+    if (hasCall && (card.phone || card.name)) {
+      el.who.hidden = false;
+      el.who.innerHTML = (card.name ? '<b>' + esc(card.name) + '</b>' : '') +
+        (card.phone ? '<span>' + esc(phoneBR(card.phone) || card.phone) + '</span>' : '');
+    } else {
+      el.who.hidden = true;
+    }
+
+    var hold = $(ENGINE.btnHold);
+    if (hold) {
+      hold.classList.toggle('ccxa-on-hold', info.key === 'hold');
+      relabel(ENGINE.btnHold, info.key === 'hold' ? 'Retomar' : 'Colocar em espera');
+    }
+    el.break.classList.toggle('on', info.key === 'break');
+    el.break.textContent = info.key === 'break' ? 'Sair da pausa' : 'Pausa';
+
+    var mode = hasCall ? 'call' : (info.key === 'break' ? 'break' : 'idle');
+    if (mode !== S.shownMode) {
+      S.shownMode = mode;
+      if (mode === 'call') {
+        el.callcard.hidden = false; el.idle.hidden = true;
+      } else {
+        el.callcard.hidden = true; el.idle.hidden = false;
+        el.idle.className = 'idle-card' + (mode === 'break' ? ' paused' : '');
+        el.idle.innerHTML = mode === 'break'
+          ? '<div class="big">Em pausa</div><p>A fila não vai entregar ligações enquanto você estiver em pausa.</p>'
+          : '<div class="big">Disponível</div><p>Assim que a fila entregar uma ligação, os dados do cliente aparecem aqui.</p>';
+      }
+    }
+  }
+
+  /* Espera o motor estar com a sessao ativa montada (area principal + botoes existem). */
+  function ready() {
+    var tries = 0;
+    var iv = setInterval(function () {
+      if ($(ENGINE.area) && $(ENGINE.btnHangup) && $(ENGINE.contenido)) { clearInterval(iv); boot(); }
+      else if (++tries > 60) clearInterval(iv); // ~30s; senao desiste e deixa o console original
+    }, 500);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready);
+  else ready();
+})();
