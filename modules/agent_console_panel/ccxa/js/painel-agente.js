@@ -159,7 +159,10 @@
         '<span class="sub">' + esc(CFG.agent_name || '') + '</span></div>' +
       '<div class="bar" id="ccxa-bar">' +
         '<div class="bar-state"><b id="ccxa-label">-</b><span id="ccxa-sub"></span></div>' +
-        '<div class="bar-timer" id="ccxa-timer">00:00:00</div>' +
+        '<div class="bar-clock">' +
+          '<div class="bar-timer" id="ccxa-timer">00:00:00</div>' +
+          '<div class="bar-total"><span class="bar-total-lbl">Total da sessão</span><span class="bar-total-val" id="ccxa-total">00:00:00</span></div>' +
+        '</div>' +
         '<div class="bar-who" id="ccxa-who" hidden></div>' +
       '</div>' +
       '<div class="stage">' +
@@ -180,7 +183,7 @@
         '<div class="idle-card" id="ccxa-idle" hidden></div>' +
       '</div>' +
       '<div class="session">' +
-        '<span class="shift login" title="Tempo total logado"><span class="dot"></span><span class="lbl">Logado</span> <span class="val" id="ccxa-sh-login">00:00:00</span></span>' +
+        '<span class="shift login" title="Tempo total de sessão (inclui pausa e ligações)"><span class="dot"></span><span class="lbl">Total</span> <span class="val" id="ccxa-sh-login">00:00:00</span></span>' +
         '<span class="shift break" title="Tempo total em pausa"><span class="dot"></span><span class="lbl">Pausa</span> <span class="val" id="ccxa-sh-break">00:00:00</span></span>' +
         '<span class="shift hold" title="Tempo total em espera"><span class="dot"></span><span class="lbl">Espera</span> <span class="val" id="ccxa-sh-hold">00:00:00</span></span>' +
         '<span class="spacer"></span>' +
@@ -190,7 +193,7 @@
     area.appendChild(root);
 
     el.bar = $('#ccxa-bar'); el.label = $('#ccxa-label'); el.sub = $('#ccxa-sub');
-    el.timer = $('#ccxa-timer'); el.who = $('#ccxa-who');
+    el.timer = $('#ccxa-timer'); el.total = $('#ccxa-total'); el.who = $('#ccxa-who');
     el.callcard = $('#ccxa-callcard'); el.idle = $('#ccxa-idle');
     el.actions = $('#ccxa-actions'); el.break = $('#ccxa-break'); el.logout = $('#ccxa-logout');
     el.shLogin = $('#ccxa-sh-login'); el.shBreak = $('#ccxa-sh-break'); el.shHold = $('#ccxa-sh-hold');
@@ -228,12 +231,23 @@
     if (el.shBreak) el.shBreak.parentNode.classList.toggle('zero', isZero(el.shBreak.textContent));
     if (el.shHold) el.shHold.parentNode.classList.toggle('zero', isZero(el.shHold.textContent));
 
-    // Cronometro da barra: tempo DA LIGACAO quando em ligacao; senao, tempo total logado.
-    var callTimer = $(ENGINE.timer);
-    var callStr = callTimer ? callTimer.textContent.trim() : '';
+    // Cronometro da barra reflete o TEMPO NO ESTADO ATUAL:
+    //  - em pausa: tempo total em pausa (mesmo do medidor Pausa);
+    //  - em ligacao/espera: cronometro da ligacao atual;
+    //  - disponivel: tempo total de sessao (nao ha "tempo disponivel" confiavel no motor).
+    var callStr = $(ENGINE.timer) ? $(ENGINE.timer).textContent.trim() : '';
     var loginStr = el.shLogin ? el.shLogin.textContent.trim() : '';
-    var onCall = (info.key === 'oncall' || info.key === 'hold' || info.key === 'ringing');
-    el.timer.textContent = (onCall && callStr && callStr !== '00:00:00') ? callStr : (loginStr || callStr || '00:00:00');
+    var breakStr = el.shBreak ? el.shBreak.textContent.trim() : '';
+    var barTime;
+    if (info.key === 'break') barTime = breakStr;
+    else if (info.key === 'oncall' || info.key === 'hold' || info.key === 'ringing') barTime = (callStr && callStr !== '00:00:00') ? callStr : loginStr;
+    else barTime = loginStr;
+    el.timer.textContent = barTime || callStr || '00:00:00';
+    if (el.total) el.total.textContent = loginStr || '00:00:00';
+    // esconde o "Total" quando a barra ja esta mostrando o proprio total (estado disponivel)
+    var barShowsTotal = (info.key !== 'break' && info.key !== 'oncall' && info.key !== 'hold' && info.key !== 'ringing');
+    var totalBox = el.total ? el.total.parentNode : null;
+    if (totalBox) totalBox.style.visibility = barShowsTotal ? 'hidden' : 'visible';
 
     var card = readCard();
     var hasCall = (info.key === 'oncall' || info.key === 'hold' || info.key === 'ringing');
