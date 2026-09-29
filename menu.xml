@@ -2,5 +2,6 @@
 <module>
   <menulist>
     <menuitem menuid="ccx_painel" desc="Painel" parent="call_center" module="yes" link="" order="0"></menuitem>
+    <menuitem menuid="ccx_campanhas" desc="Campanhas" parent="call_center" module="yes" link="" order="1"></menuitem>
   </menulist>
 </module>
