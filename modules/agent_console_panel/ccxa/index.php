@@ -43,7 +43,18 @@ class Panel_Ccxa
 
         // O CSS não é injetado pelo console (só .js), então o incluímos aqui.
         // A config precede o painel-agente.js, que o console injeta em seguida.
-        $inject =
+        // Anti-flash: esconde o console de saida imediatamente (antes do JS externo carregar),
+        // com salvaguarda que revela de volta se a casca nao montar (ex.: erro de JS).
+        $antiFlash =
+            '<style id="ccxa-antiflash">' .
+            '#issabel-callcenter-wrap,#issabel-callcenter-shift-bar,#issabel-callcenter-titulo-consola{visibility:hidden!important}' .
+            '</style>' .
+            '<script>(function(){' .
+            'window.addEventListener("load",function(){setTimeout(function(){' .
+            'if(!document.getElementById("ccxa-root")){var s=document.getElementById("ccxa-antiflash");if(s)s.parentNode.removeChild(s);}' .
+            '},4000);});})();</script>';
+
+        $inject = $antiFlash .
             '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&display=swap">' .
             '<link rel="stylesheet" href="' . htmlspecialchars($css) . '?v=' . $v . '">' .
             '<script>window.CCXA_CFG = ' . $cfgJson . ';</script>';
