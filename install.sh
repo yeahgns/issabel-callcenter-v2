@@ -21,6 +21,18 @@ say "Copiando módulos para $WEB"
 /bin/cp -rf modules/ccx_common modules/ccx_painel "$WEB/"
 chown -R asterisk:asterisk "$WEB/ccx_common" "$WEB/ccx_painel"
 
+say "Instalando a casca do Console do Agente (painel ccxa)"
+# O agent_console injeta automaticamente todo .js de panels/*/js/ e chama a classe
+# Panel_Ccxa. Não editamos nenhum arquivo do console; só adicionamos este painel.
+CONSOLE_PANELS="$WEB/agent_console/panels"
+if [ -d "$WEB/agent_console" ]; then
+    mkdir -p "$CONSOLE_PANELS"
+    /bin/cp -rf modules/agent_console_panel/ccxa "$CONSOLE_PANELS/"
+    chown -R asterisk:asterisk "$CONSOLE_PANELS/ccxa"
+else
+    echo "   Aviso: agent_console não encontrado; a casca do console não foi instalada."
+fi
+
 say "Aplicando migração do banco (tabelas ccx_*, pausa Preview, proteção de campanhas preview)"
 MYSQL_PWD="$ROOTPW" mysql -uroot --default-character-set=utf8mb4 call_center < setup/ccx_schema.sql
 
