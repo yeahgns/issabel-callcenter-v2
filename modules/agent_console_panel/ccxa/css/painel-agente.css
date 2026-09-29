@@ -6,6 +6,7 @@
 /* Esconde as partes visiveis do console antigo quando a casca esta ativa.
    Nao usamos display:none no que foi MOVIDO (ficha/form) porque agora eles vivem
    dentro da casca; escondemos apenas os restos do layout velho. */
+body.ccxa-on #ccxa-antiflash { display: none; }
 body.ccxa-on #issabel-callcenter-titulo-consola,
 body.ccxa-on #issabel-callcenter-shift-bar,
 body.ccxa-on #issabel-callcenter-controles,
@@ -144,8 +145,17 @@ body.ccxa-on #issabel-callcenter-estado-agente { position: absolute; left: -9999
 .ccxa .act-host .ui-state-active { border: 1px solid var(--line); background: var(--surface); }
 
 /* rodape de sessao */
-.ccxa .session { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+.ccxa .session { display: flex; align-items: center; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
 .ccxa .session .spacer { margin-left: auto; }
+/* medidores de jornada (espelham os shift timers do motor) */
+.ccxa .shift { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); font-size: 13.5px; }
+.ccxa .shift .lbl { color: var(--muted); }
+.ccxa .shift .val { font-weight: 700; font-variant-numeric: tabular-nums; }
+.ccxa .shift .dot { width: 8px; height: 8px; border-radius: 50%; }
+.ccxa .shift.login .dot { background: var(--ok); }
+.ccxa .shift.break .dot { background: var(--lost); }
+.ccxa .shift.hold  .dot { background: var(--hold); }
+.ccxa .shift.break.zero, .ccxa .shift.hold.zero { opacity: .5; }
 .ccxa .btn-break, .ccxa .btn-logout { min-height: 40px; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--line); font-weight: 600; color: var(--muted); }
 .ccxa .btn-break:hover { border-color: var(--faint); color: var(--ink); }
 .ccxa .btn-break.on { background: var(--lost-bg); color: var(--lost); border-color: var(--lost); }
