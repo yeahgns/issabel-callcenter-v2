@@ -167,6 +167,19 @@
       m.hidden = true; m.previousElementSibling.setAttribute('aria-expanded', 'false');
     });
   }
+  // O menu abre "flutuando" na janela (position: fixed), para não ser cortado por
+  // containers do Issabel com overflow: hidden. Abre para cima se não couber embaixo.
+  function placeMenu(btn, menu) {
+    var r = btn.getBoundingClientRect(), mw = menu.offsetWidth, mh = menu.offsetHeight, gap = 6;
+    var left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8));
+    var top = r.bottom + gap;
+    if (top + mh > window.innerHeight - 8 && r.top - gap - mh >= 8) top = r.top - gap - mh;
+    menu.style.left = left + 'px';
+    menu.style.top = Math.max(8, top) + 'px';
+  }
+  window.addEventListener('scroll', closeMenus, true);
+  window.addEventListener('resize', closeMenus);
+
   function find(id) { return (S.list || []).filter(function (x) { return x.id === id; })[0]; }
 
   function bindRow(scope) {
@@ -175,7 +188,7 @@
       var act = b.getAttribute('data-act'), id = parseInt(b.getAttribute('data-id'), 10), c = find(id);
       if (act === 'menu') {
         var m = b.nextElementSibling, open = m.hidden; closeMenus(); m.hidden = !open; b.setAttribute('aria-expanded', String(open));
-        if (open) { var f = m.querySelector('button:not([disabled]), a'); if (f) f.focus(); }
+        if (open) { placeMenu(b, m); var f = m.querySelector('button:not([disabled]), a'); if (f) f.focus({ preventScroll: true }); }
         return;
       }
       closeMenus();
