@@ -81,7 +81,7 @@
 .ccxc .acts { display: flex; gap: 8px; justify-content: flex-end; }
 .ccxc .more { position: relative; }
 .ccxc .menu {
-  position: absolute; right: 0; top: calc(100% + 6px); width: 210px; z-index: 30; padding: 6px;
+  position: fixed; top: 0; left: 0; width: 210px; z-index: 1050; padding: 6px;
   background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgba(15,39,64,.14);
 }
 #ccx-campanhas .menu button, #ccx-campanhas .menu a {
@@ -165,3 +165,29 @@ body.ccxc-page { perspective: none !important; -webkit-perspective: none !import
   .ccxc .search { flex: 1 1 100%; margin-left: 0; }
 }
 @media (prefers-reduced-motion: reduce) { .ccxc .cc-toast { transition: none; } }
+
+/* ---------- blindagem contra o tema do Issabel ----------
+   O tema (e personalizações dele) aplica padding, altura e box-sizing próprios em
+   input/select/textarea/label. Travamos só tamanho e forma, pelo id da tela. */
+#ccx-campanhas, #ccx-campanhas *, #ccx-campanhas *::before, #ccx-campanhas *::after { box-sizing: border-box !important; }
+#ccx-campanhas .two > * { min-width: 0 !important; }
+#ccx-campanhas .field input:not([type="checkbox"]):not([type="radio"]),
+#ccx-campanhas .field select,
+#ccx-campanhas .search input {
+  width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+  height: 40px !important; min-height: 40px !important; margin: 0 !important;
+  padding-top: 0 !important; padding-bottom: 0 !important; line-height: 38px !important;
+  font-size: 14.5px !important; font-weight: 400 !important; float: none !important;
+}
+#ccx-campanhas .field input:not([type="checkbox"]):not([type="radio"]),
+#ccx-campanhas .field select { padding-left: 12px !important; }
+#ccx-campanhas .field input:not([type="checkbox"]):not([type="radio"]) { padding-right: 12px !important; }
+#ccx-campanhas .field select { padding-right: 32px !important; }
+#ccx-campanhas .search input { padding-left: 34px !important; padding-right: 12px !important; }
+#ccx-campanhas .field textarea {
+  width: 100% !important; max-width: 100% !important; min-width: 0 !important; height: auto !important; min-height: 110px !important;
+  margin: 0 !important; padding: 9px 12px !important; line-height: 1.5 !important; font-size: 14.5px !important; float: none !important;
+}
+#ccx-campanhas .check input { width: 16px !important; height: 16px !important; min-height: 0 !important; margin: 2px 0 0 !important; padding: 0 !important; }
+#ccx-campanhas .field > span, #ccx-campanhas label.field > span { font-weight: 500 !important; }
+#ccx-campanhas .d-body { overflow-x: hidden !important; }
