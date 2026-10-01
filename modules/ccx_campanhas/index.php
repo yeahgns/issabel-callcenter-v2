@@ -25,7 +25,8 @@ function _moduleContent(&$smarty, $module_name)
     }
 
     require_once 'modules/ccx_common/libs/CampaignService.php';
-    $mutating = in_array($action, array('save', 'status', 'delete', 'purge'), true);
+    require_once 'modules/ccx_common/libs/ImportService.php';
+    $mutating = in_array($action, array('save', 'status', 'delete', 'purge', 'import_upload', 'import_analyze', 'import_commit'), true);
     if ($mutating) {
         $tok = isset($_SERVER['HTTP_X_CCX_TOKEN']) ? (string) $_SERVER['HTTP_X_CCX_TOKEN'] : '';
         if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !hash_equals($_SESSION['ccx_csrf'], $tok)) {
@@ -57,6 +58,25 @@ function _moduleContent(&$smarty, $module_name)
             case 'purge':
                 $svc->purge($id);
                 return ccx_json(array('ok' => true));
+            case 'import_upload':
+                if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+                    $err = isset($_FILES['file']['error']) ? (int) $_FILES['file']['error'] : UPLOAD_ERR_NO_FILE;
+                    $msg = in_array($err, array(UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE), true)
+                        ? 'O arquivo é maior que o limite de envio do servidor (upload_max_filesize do PHP).'
+                        : 'O arquivo não chegou ao servidor. Tente de novo.';
+                    return ccx_json(array('error' => $msg), 400);
+                }
+                $imp = new CcxImportService($cfg);
+                return ccx_json($imp->upload($id, $_FILES['file']['tmp_name'], basename($_FILES['file']['name'])));
+            case 'import_analyze':
+            case 'import_commit':
+                $imp = new CcxImportService($cfg);
+                $key = isset($_POST['key']) ? (string) $_POST['key'] : '';
+                $pc = isset($_POST['phone_col']) ? (int) $_POST['phone_col'] : -1;
+                $opts = array('skip_dup_file' => !empty($_POST['skip_dup_file']), 'skip_dup_campaign' => !empty($_POST['skip_dup_campaign']));
+                if ($action === 'import_analyze') return ccx_json($imp->analyze($key, $pc, $opts));
+                $cols = isset($_POST['cols']) ? (array) $_POST['cols'] : array();
+                return ccx_json($imp->commit($key, $pc, $cols, $opts));
         }
         return ccx_json(array('error' => 'Ação desconhecida.'), 400);
     } catch (Exception $e) {
