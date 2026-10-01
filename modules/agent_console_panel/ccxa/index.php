@@ -15,6 +15,52 @@
  */
 class Panel_Ccxa
 {
+    /* ---------- ligações de hoje (histórico com ficha e formulário) ---------- */
+
+    private static function history()
+    {
+        require_once 'modules/ccx_common/libs/bootstrap.php';
+        require_once 'modules/ccx_common/libs/HistoryService.php';
+        $chan = isset($_SESSION['callcenter']['agente']) ? (string) $_SESSION['callcenter']['agente'] : '';
+        return new CcxHistory(ccx_pdo('cc'), $chan);
+    }
+    private static function out($data)
+    {
+        if (!headers_sent()) header('Content-Type: application/json; charset=UTF-8');
+        return json_encode($data, JSON_UNESCAPED_UNICODE);
+    }
+
+    /* action=ccxa_history */
+    public static function handleJSON_history($module_name, $smarty, $local_templates_dir, $oPaloConsola, $estado)
+    {
+        try { return self::out(array('ok' => true, 'now' => time(), 'calls' => self::history()->today())); }
+        catch (Exception $e) { return self::out(array('ok' => false, 'error' => $e->getMessage())); }
+    }
+
+    /* action=ccxa_detail&id=N */
+    public static function handleJSON_detail($module_name, $smarty, $local_templates_dir, $oPaloConsola, $estado)
+    {
+        try { return self::out(array('ok' => true, 'call' => self::history()->detail(isset($_GET['id']) ? (int) $_GET['id'] : 0))); }
+        catch (Exception $e) { return self::out(array('ok' => false, 'error' => $e->getMessage())); }
+    }
+
+    /* action=ccxa_record (POST id, data=JSON {id_form: {id_campo: valor}}) */
+    public static function handleJSON_record($module_name, $smarty, $local_templates_dir, $oPaloConsola, $estado)
+    {
+        try {
+            $tok = isset($_SERVER['HTTP_X_CCX_TOKEN']) ? (string) $_SERVER['HTTP_X_CCX_TOKEN'] : '';
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_SESSION['ccxa_csrf']) || !hash_equals($_SESSION['ccxa_csrf'], $tok)) {
+                throw new Exception('Sessão expirada. Recarregue a página.');
+            }
+            $data = json_decode(isset($_POST['data']) ? (string) $_POST['data'] : '', true);
+            if (!is_array($data)) throw new Exception('Dados inválidos.');
+            self::history()->save(isset($_POST['id']) ? (int) $_POST['id'] : 0, $data, $oPaloConsola);
+            return self::out(array('ok' => true));
+        } catch (Exception $e) {
+            return self::out(array('ok' => false, 'error' => $e->getMessage()));
+        }
+    }
+
     /*
      * action=ccxa_ringing&rawmode=yes -> ligação tocando no ramal desta agente (antes de atender),
      * com a ficha do contato quando for de campanha. &debug=1 inclui os canais vistos no Asterisk.
@@ -82,7 +128,9 @@ class Panel_Ccxa
             $agentName = (string) $_SESSION['callcenter']['agente'];
         }
 
+        if (empty($_SESSION['ccxa_csrf'])) $_SESSION['ccxa_csrf'] = bin2hex(random_bytes(16));
         $cfg = array(
+            'token'      => $_SESSION['ccxa_csrf'],
             'title'      => 'Console do agente',
             'agent_name' => $agentName,
             // Reservado para futuras ações do painel (action=ccxa_...&rawmode=yes).
