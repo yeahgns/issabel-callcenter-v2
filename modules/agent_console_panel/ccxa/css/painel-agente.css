@@ -250,3 +250,77 @@ body.ccxa-on #issabel-callcenter-estado-agente { position: absolute; left: -9999
 }
 #ccxa-root select.issabel-callcenter-field { padding-right: 32px !important; }
 #ccxa-root textarea.issabel-callcenter-field { height: auto !important; min-height: 88px !important; padding: 9px 12px !important; line-height: 1.5 !important; }
+
+/* ---------- ligações de hoje ---------- */
+/* o tema Neon põe perspective no body, o que prenderia o painel lateral (position: fixed) ao body */
+body.ccxa-on { perspective: none !important; -webkit-perspective: none !important; }
+.ccxa .hist { margin-top: 20px; padding-bottom: 6px; }
+.ccxa .hist .h-head { display: flex; align-items: center; gap: 12px; padding: 16px 18px 2px; }
+#ccxa-root .hist h2 { padding: 0; margin: 0 auto 0 0; font-size: 15px; }
+.ccxa .hist h2 span { color: var(--faint); font-weight: 500; font-size: 13.5px; margin-left: 4px; }
+.ccxa .h-seg { display: inline-flex; background: var(--line-soft); border-radius: 9px; padding: 3px; gap: 2px; }
+#ccxa-root .h-seg button { padding: 5px 11px; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--muted); }
+#ccxa-root .h-seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(15,39,64,.12); }
+.ccxa .h-seg .n { color: var(--faint); margin-left: 4px; }
+.ccxa .h-list { max-height: 360px; overflow-y: auto; border-top: 1px solid var(--line-soft); }
+#ccxa-root .h-row {
+  display: grid; grid-template-columns: 52px minmax(0, 1.4fr) minmax(0, 1fr) 70px 150px; gap: 12px; align-items: center;
+  width: 100%; padding: 10px 18px; text-align: left; border-bottom: 1px solid var(--line-soft); background: none; color: var(--ink); font-size: 14px;
+}
+#ccxa-root .h-row:last-child { border-bottom: 0; }
+#ccxa-root .h-row:not(:disabled):hover { background: #F8FAFD; }
+#ccxa-root .h-row:disabled { cursor: default; opacity: .75; }
+.ccxa .h-time { font-weight: 600; color: var(--muted); }
+.ccxa .h-who { min-width: 0; }
+.ccxa .h-who b { display: block; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ccxa .h-who span, .ccxa .h-camp { display: block; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ccxa .h-dur { font-size: 13px; color: var(--muted); text-align: right; }
+.ccxa .h-badge { justify-self: end; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: 20px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.ccxa .h-badge::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.ccxa .h-badge.ok { color: var(--ok); background: #E4F5EE; }
+.ccxa .h-badge.pend { color: var(--hold); background: var(--hold-bg); }
+.ccxa .h-badge.none { color: var(--muted); background: var(--line-soft); }
+.ccxa .h-badge.live { color: var(--brand-ink); background: var(--brand-soft); }
+.ccxa .h-empty { padding: 22px 18px; color: var(--muted); font-size: 14px; margin: 0; }
+
+/* ---------- painel lateral: ficha + registro de uma ligação do dia ---------- */
+.ccxa .ccxa-dback { position: fixed; inset: 0; background: rgba(15,39,64,.32); z-index: 1000; }
+.ccxa .ccxa-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100vw); z-index: 1001;
+  display: flex; flex-direction: column; background: var(--paper); box-shadow: -12px 0 32px rgba(15,39,64,.16);
+}
+.ccxa .dr-head { display: flex; align-items: center; gap: 12px; padding: 16px 20px; background: var(--surface); border-bottom: 1px solid var(--line); }
+#ccxa-root .dr-head h2 { font-size: 17px; font-weight: 700; margin: 0; }
+.ccxa .dr-head p { font-size: 13px; color: var(--muted); margin: 2px 0 0; }
+#ccxa-root .dr-x { margin-left: auto; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 15px; }
+.ccxa .dr-body { flex: 1; overflow-y: auto; padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 14px; margin: 0; }
+.ccxa .dr-script { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 18px; }
+.ccxa .dr-script summary { cursor: pointer; font-weight: 600; font-size: 14px; }
+.ccxa .dr-script .pv-script { margin-top: 8px; }
+.ccxa .dr-form .dr-fields { padding: 4px 18px 6px; }
+.ccxa .df { display: block; margin: 0 0 14px; }
+.ccxa .df > span { display: block; font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 6px; }
+#ccxa-root .df input, #ccxa-root .df select, #ccxa-root .df textarea {
+  display: block; box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; margin: 0 !important;
+  height: 40px !important; min-height: 40px !important; padding: 0 12px !important; line-height: 38px !important;
+  border: 1px solid var(--line) !important; border-radius: 8px; background: var(--surface) !important; color: var(--ink);
+  font-family: var(--font); font-size: 14.5px !important; box-shadow: none !important; float: none !important;
+}
+#ccxa-root .df textarea { height: auto !important; min-height: 92px !important; padding: 9px 12px !important; line-height: 1.5 !important; resize: vertical; }
+#ccxa-root .df input:focus, #ccxa-root .df select:focus, #ccxa-root .df textarea:focus { border-color: var(--brand) !important; outline: none; box-shadow: 0 0 0 3px var(--brand-soft) !important; }
+.ccxa .df-count { display: block; text-align: right; font-size: 12px; color: var(--faint); margin-top: 4px; }
+.ccxa .df-label { font-weight: 700; font-size: 14px; margin: 4px 0 12px; }
+.ccxa .dr-form h3 { font-size: 13.5px; font-weight: 700; margin: 6px 0 10px; }
+.ccxa .dr-msg { margin: 0 18px 12px; font-size: 13.5px; min-height: 1em; }
+.ccxa .dr-msg.ok { color: var(--ok); font-weight: 600; }
+.ccxa .dr-msg.err, .ccxa .dr-err { color: var(--lost); }
+.ccxa .dr-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; background: var(--surface); border-top: 1px solid var(--line); }
+#ccxa-root .dr-btn { min-height: 40px; padding: 8px 18px; border-radius: 8px; background: var(--brand); color: #fff; font-weight: 600; font-size: 14px; border: 0; }
+#ccxa-root .dr-btn:hover { background: var(--brand-ink); }
+#ccxa-root .dr-btn.ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--line); font-weight: 500; }
+#ccxa-root .dr-btn:disabled { opacity: .6; cursor: wait; }
+@media (max-width: 760px) {
+  #ccxa-root .h-row { grid-template-columns: 46px minmax(0, 1fr) auto; }
+  .ccxa .h-camp, .ccxa .h-dur { display: none; }
+}
+#ccxa-root .dr-head h2, #ccxa-root .hist h2, #ccxa-root .dr-form h2, #ccxa-root .dr-form h3 { color: var(--ink) !important; font-family: var(--font); }
