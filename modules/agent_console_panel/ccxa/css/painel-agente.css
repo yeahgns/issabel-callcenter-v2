@@ -208,3 +208,45 @@ body.ccxa-on #issabel-callcenter-estado-agente { position: absolute; left: -9999
   .ccxa .bar-who { text-align: left; }
 }
 @media (prefers-reduced-motion: reduce) { .ccxa .bar { transition: none; } }
+
+/* ---------- textos longos da planilha (ex.: "Contexto") ----------
+   Saem da grade de fatos e viram um bloco de leitura com a largura inteira do card:
+   peso normal, quebras de linha preservadas, até 6 linhas com "Mostrar tudo". */
+.ccxa #issabel-callcenter-llamada-info tr[data-long] { grid-column: 1 / -1; order: 90; }
+.ccxa #issabel-callcenter-llamada-info tr[data-long] td:last-of-type,
+.ccxa .pv-long .txt {
+  font-weight: 400 !important; font-size: 14px; line-height: 1.6; white-space: pre-line; color: var(--ink);
+  /* espaço de cima/baixo como borda: o corte em 6 linhas não deixa meia linha aparecendo */
+  background: var(--paper); border-radius: 10px; padding: 0 14px; border-top: 10px solid var(--paper); border-bottom: 10px solid var(--paper); margin-top: 4px;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 6; overflow: hidden;
+}
+.ccxa #issabel-callcenter-llamada-info tr[data-long].open td:last-of-type,
+.ccxa .pv-long.open .txt { display: block; -webkit-line-clamp: unset; }
+#ccxa-root .ccxa-more {
+  align-self: flex-start; margin: 6px 0 0; padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--brand-ink); font-family: var(--font); font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* ---------- prévia da ligação chegando (antes de atender) ---------- */
+.ccxa .pv-facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px 28px; margin: 0; }
+.ccxa .pv-facts dt { font-size: 12.5px; color: var(--muted); font-weight: 400; }
+.ccxa .pv-facts dd { margin: 0; font-size: 15px; font-weight: 600; word-break: break-word; }
+.ccxa .pv-long { display: flex; flex-direction: column; margin-top: 16px; }
+.ccxa .pv-long .lbl { font-size: 12.5px; color: var(--muted); }
+.ccxa .pv-none { color: var(--muted); font-size: 14px; margin: 0; }
+.ccxa .pv-script { font-size: 14.5px; line-height: 1.6; }
+.ccxa .ring-note { border-color: #CFC4F2; background: var(--surface); }
+.ccxa .ring-note h2 { color: #5A3FB0 !important; }
+
+/* ---------- blindagem dos campos do formulário contra o tema ---------- */
+#ccxa-root #issabel-callcenter-cejillas-formulario table,
+#ccxa-root #issabel-callcenter-cejillas-formulario tbody,
+#ccxa-root #issabel-callcenter-cejillas-formulario tr,
+#ccxa-root #issabel-callcenter-cejillas-formulario td { width: 100% !important; max-width: 100% !important; min-width: 0 !important; box-sizing: border-box !important; }
+#ccxa-root .issabel-callcenter-field {
+  box-sizing: border-box !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+  height: 40px !important; min-height: 40px !important; margin: 0 !important;
+  padding: 0 12px !important; line-height: 38px !important; font-size: 14.5px !important; float: none !important;
+}
+#ccxa-root select.issabel-callcenter-field { padding-right: 32px !important; }
+#ccxa-root textarea.issabel-callcenter-field { height: auto !important; min-height: 88px !important; padding: 9px 12px !important; line-height: 1.5 !important; }
