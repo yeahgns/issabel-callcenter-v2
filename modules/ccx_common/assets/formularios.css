@@ -1,0 +1,35 @@
+/* Issabel Call Center Plus - Formulários. Base visual em campanhas.css; aqui só o editor de campos. */
+#ccx-formularios .cf-drawer { width: min(640px, 100vw); }
+#ccx-formularios .prog { display: flex; flex-direction: column; gap: 2px; }
+#ccx-formularios .cf-used { font-size: 12.5px; color: var(--faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* um cartão por campo */
+#ccx-formularios .cf-field {
+  display: grid; grid-template-columns: 36px minmax(0, 1fr) 36px; gap: 10px; align-items: start;
+  padding: 12px; margin: 0 0 10px; border: 1px solid var(--line); border-radius: 10px; background: #FAFBFD;
+}
+#ccx-formularios .cf-order { display: flex; flex-direction: column; gap: 4px; }
+#ccx-formularios .cf-order .btn.icon, #ccx-formularios .cf-del { width: 36px !important; height: 32px !important; min-height: 32px !important; font-size: 14px; background: var(--surface); }
+#ccx-formularios .cf-order .btn:disabled, #ccx-formularios .cf-del:disabled { opacity: .35; cursor: not-allowed; }
+#ccx-formularios .cf-del:not(:disabled):hover { color: var(--lost) !important; border-color: var(--lost) !important; }
+#ccx-formularios .cf-line { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 10px; }
+#ccx-formularios .cf-line > * { min-width: 0 !important; }
+#ccx-formularios .cf-main .field { margin-bottom: 8px !important; }
+#ccx-formularios .cf-main .help { margin: 0 0 6px; }
+#ccx-formularios .cf-main textarea { min-height: 96px !important; }
+#ccx-formularios .cf-add { margin: 2px 0 6px; }
+
+/* prévia no visual do console da agente */
+#ccx-formularios .cf-preview { padding: 16px 18px; border-radius: 12px; background: var(--paper); border: 1px dashed var(--line); }
+#ccx-formularios .pv-field { margin-bottom: 12px; }
+#ccx-formularios .pv-field span { display: block; font-size: 13px; color: var(--muted); font-weight: 500; margin-bottom: 5px; }
+#ccx-formularios .pv-field input, #ccx-formularios .pv-field select, #ccx-formularios .pv-field textarea {
+  display: block; width: 100% !important; max-width: 100% !important; min-height: 38px !important; height: auto !important; margin: 0 !important;
+  padding: 7px 12px !important; border: 1px solid var(--line) !important; border-radius: 8px; background: var(--surface) !important;
+  font-size: 14px !important; color: var(--muted); box-shadow: none !important; box-sizing: border-box !important;
+}
+#ccx-formularios .pv-field textarea { min-height: 70px !important; resize: none; }
+#ccx-formularios .pv-label { font-weight: 700; font-size: 14px; margin: 4px 0 12px; }
+#ccx-formularios .pv-save { display: inline-block; padding: 8px 16px; border-radius: 8px; background: var(--brand); color: #fff; font-size: 13.5px; font-weight: 600; opacity: .85; }
+
+@media (max-width: 640px) { #ccx-formularios .cf-line { grid-template-columns: 1fr; } }
