@@ -43,6 +43,14 @@ fi
 say "Aplicando migração do banco (tabelas ccx_*, pausa Preview, proteção de campanhas preview)"
 MYSQL_PWD="$ROOTPW" mysql -uroot --default-character-set=utf8mb4 call_center < setup/ccx_schema.sql
 
+# Cada célula da planilha vai para call_attribute.value, que no callcenter original é
+# varchar(128): textos longos (ex.: uma coluna "Contexto") seriam cortados. Só amplia.
+VT=$(MYSQL_PWD="$ROOTPW" mysql -N -uroot call_center -e "SELECT DATA_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='call_center' AND TABLE_NAME='call_attribute' AND COLUMN_NAME='value'")
+if [ "$VT" = "varchar" ]; then
+    say "Ampliando call_attribute.value para aceitar textos longos"
+    MYSQL_PWD="$ROOTPW" mysql -uroot call_center -e "ALTER TABLE call_attribute MODIFY value TEXT NOT NULL"
+fi
+
 say "Registrando os menus Call Center > Painel e Campanhas"
 mkdir -p "$SHARE"
 /bin/cp -f menu.xml VERSION "$SHARE/"
