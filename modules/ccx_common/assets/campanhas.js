@@ -69,9 +69,12 @@
       '<button type="button" class="btn" id="cc-new">Nova campanha</button></header>' +
     '<main>' +
       '<div id="cc-notice"></div>' +
+      '<section id="cc-importview" hidden></section>' +
+      '<div id="cc-listview">' +
       '<div class="toolbar"><div class="seg" id="cc-filter" role="group" aria-label="Filtrar por status"></div>' +
         '<div class="search"><label class="sr-only" for="cc-q">Buscar campanha</label><input type="search" id="cc-q" placeholder="Buscar campanha" autocomplete="off"></div></div>' +
       '<div class="cc-panel" id="cc-list"><div class="empty">Carregando campanhas…</div></div>' +
+      '</div>' +
     '</main>' +
     '<div class="drawer-back" id="cc-back" hidden></div>' +
     '<aside class="drawer" id="cc-drawer" hidden aria-labelledby="cc-dtitle" role="dialog" aria-modal="true"></aside>' +
@@ -107,7 +110,7 @@
   }
   function schedule() {
     clearTimeout(S.timer);
-    S.timer = setTimeout(function () { if (!document.hidden && $('#cc-drawer').hidden) load().then(schedule); else schedule(); }, 15000);
+    S.timer = setTimeout(function () { if (!document.hidden && $('#cc-drawer').hidden && $('#cc-importview').hidden) load().then(schedule); else schedule(); }, 15000);
   }
 
   function renderList() {
@@ -142,7 +145,7 @@
       var progress = t.total
         ? '<div class="prog"><div class="bar" aria-hidden="true"><i style="width:' + pct + '%"></i></div>' +
           '<span><b>' + nf(done) + '</b> de ' + nf(t.total) + ' trabalhados, ' + plural(t.pending, 'pendente', 'pendentes') + '</span></div>'
-        : '<div class="prog none"><span>Sem contatos</span><a href="' + esc(LEGACY + '&action=load_contacts&id_campaign=' + x.id) + '">Carregar lista</a></div>';
+        : '<div class="prog none"><span>Sem contatos</span><button type="button" class="linkbtn" data-act="import" data-id="' + x.id + '">Carregar lista</button></div>';
       return '<div class="cc-row" data-id="' + x.id + '">' +
         '<div class="name"><b>' + esc(x.name) + '</b><span>' + esc(fila) + ', ' + br(x.date_from) + ' a ' + br(x.date_to) +
           ', das ' + esc(x.time_from) + ' às ' + esc(x.time_to) + '</span></div>' +
@@ -152,7 +155,7 @@
           '<div class="more"><button type="button" class="btn ghost icon" data-act="menu" aria-haspopup="true" aria-expanded="false" aria-label="Mais ações de ' + esc(x.name) + '">⋯</button>' +
           '<div class="menu" hidden>' +
             '<button type="button" data-act="edit" data-id="' + x.id + '">Editar</button>' +
-            '<a href="' + esc(LEGACY + '&action=load_contacts&id_campaign=' + x.id) + '">Carregar contatos</a>' +
+            '<button type="button" data-act="import" data-id="' + x.id + '">Carregar contatos</button>' +
             '<a href="' + esc(LEGACY + '&action=csv_data&id_campaign=' + x.id + '&rawmode=yes') + '">Baixar resultados</a>' +
             '<button type="button" data-act="purge" data-id="' + x.id + '"' + (t.pending ? '' : ' disabled') + '>Limpar pendentes</button>' +
             '<button type="button" class="danger" data-act="delete" data-id="' + x.id + '">Excluir</button>' +
@@ -193,6 +196,7 @@
       }
       closeMenus();
       if (act === 'new') openForm(null);
+      else if (act === 'import') openImport(id);
       else if (act === 'edit') openForm(id);
       else if (act === 'on') run('status', { id: id, status: 'A' }, 'Campanha ativada. O discador começa dentro do horário configurado.');
       else if (act === 'off') run('status', { id: id, status: 'I' }, 'Campanha desativada.');
@@ -317,6 +321,203 @@
       });
     });
     f.cname.focus();
+  }
+
+  /* ---------- importação de contatos ---------- */
+  var IMP = null;   // estado da importação em andamento
+
+  function showView(importing) {
+    $('#cc-importview').hidden = !importing;
+    $('#cc-listview').hidden = importing;
+    $('#cc-new').hidden = importing;
+    notice('');
+    window.scrollTo(0, 0);
+  }
+  function leaveImport() { IMP = null; showView(false); $('#cc-importview').innerHTML = ''; load(); }
+
+  function openImport(id) {
+    var c = find(id); if (!c) return;
+    IMP = { id: id, name: c.name, status: c.status, data: null, stats: null, cols: {}, busy: false, seq: 0 };
+    showView(true);
+    renderPick();
+  }
+
+  function impHead(sub) {
+    return '<div class="imp-head"><button type="button" class="btn ghost" data-imp="back">← Campanhas</button>' +
+      '<div><h2>Carregar contatos</h2><p>' + esc(IMP.name) + (sub ? ', ' + esc(sub) : '') + '</p></div></div>';
+  }
+
+  function renderPick(err) {
+    var v = $('#cc-importview');
+    v.innerHTML = impHead() +
+      (err ? '<div class="notice error" role="alert"><p>' + esc(err) + '</p></div>' : '') +
+      '<div class="cc-panel imp-pick">' +
+        '<label class="drop" id="cc-drop"><input type="file" id="cc-file" accept=".csv,.txt,text/csv" class="sr-only">' +
+          '<b>Arraste o arquivo aqui</b><span>ou</span><span class="btn">Escolher arquivo</span></label>' +
+        '<ul class="tips">' +
+          '<li>Arquivo <b>CSV</b>, com a primeira linha contendo os nomes das colunas (por exemplo: Nome; Telefone; Empresa; Assunto).</li>' +
+          '<li>No Excel, use <b>Arquivo, Salvar como</b> e escolha <b>CSV UTF-8</b> ou <b>CSV (separado por vírgulas)</b>. Os dois funcionam.</li>' +
+          '<li>O telefone pode estar em qualquer coluna e com formatação. Ele é discado como está na planilha, só sem espaços, parênteses e traços.</li>' +
+          '<li>Cada coluna vira um dado da ficha que a agente vê durante a ligação.</li>' +
+        '</ul></div>';
+    bindImp(v);
+    var drop = $('#cc-drop'), inp = $('#cc-file');
+    inp.addEventListener('change', function () { if (inp.files[0]) sendFile(inp.files[0]); });
+    ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+    ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+    drop.addEventListener('drop', function (e) { var f = e.dataTransfer.files[0]; if (f) sendFile(f); });
+  }
+
+  function sendFile(file) {
+    var v = $('#cc-importview');
+    v.innerHTML = impHead() + '<div class="cc-panel"><div class="empty"><i class="spin" aria-hidden="true"></i>Lendo ' + esc(file.name) + '…</div></div>';
+    bindImp(v);
+    var fd = new FormData(); fd.append('file', file);
+    fetch(API + '&action=import_upload&id=' + IMP.id, { method: 'POST', credentials: 'same-origin', headers: { 'X-CCX-Token': TOKEN, Accept: 'application/json' }, body: fd })
+      .then(function (r) {
+        var ct = r.headers.get('Content-Type') || '';
+        if (ct.indexOf('json') === -1) throw new Error('Sua sessão do Issabel expirou. Recarregue a página.');
+        return r.json().then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'Erro ' + r.status); return j; });
+      })
+      .then(function (d) {
+        IMP.data = d; IMP.cols = {};
+        d.headers.forEach(function (h, i) { IMP.cols[i] = true; });
+        IMP.phone = d.phone_col; IMP.dupFile = true; IMP.dupCamp = true;
+        renderPreview(); analyze();
+      })
+      .catch(function (e) { renderPick(e.message); });
+  }
+
+  function impOpts() {
+    return { key: IMP.data.key, phone_col: IMP.phone, skip_dup_file: IMP.dupFile ? 1 : '', skip_dup_campaign: IMP.dupCamp ? 1 : '' };
+  }
+
+  function analyze() {
+    var my = ++IMP.seq;
+    var box = $('#cc-stats'); if (box) box.classList.add('loading');
+    api('import_analyze', impOpts(), true).then(function (st) {
+      if (!IMP || my !== IMP.seq) return;
+      IMP.stats = st; renderStats();
+    }).catch(function (e) {
+      if (!IMP || my !== IMP.seq) return;
+      $('#cc-stats').innerHTML = '<div class="notice error"><p>' + esc(e.message) + '</p></div>';
+    });
+  }
+
+  function renderPreview() {
+    var d = IMP.data, v = $('#cc-importview');
+    var sep = { ';': 'ponto e vírgula', ',': 'vírgula', '\t': 'tabulação' }[d.delimiter] || d.delimiter;
+    var enc = d.encoding === 'UTF-8' ? 'UTF-8' : 'padrão do Excel no Windows';
+    v.innerHTML = impHead(d.file) +
+      '<div class="cc-panel imp-summary"><p><b>' + plural(d.rows, 'contato', 'contatos') + '</b> no arquivo, separado por ' + esc(sep) + ', codificação ' + esc(enc) + '.</p>' +
+        '<button type="button" class="btn ghost" data-imp="again">Trocar arquivo</button></div>' +
+      '<div class="imp-grid">' +
+        '<div class="cc-panel imp-settings"><h3>Como ler a planilha</h3>' +
+          '<label class="field"><span>Coluna do telefone</span><select id="cc-phonecol">' +
+            d.headers.map(function (h, i) { return '<option value="' + i + '"' + (i === IMP.phone ? ' selected' : '') + '>' + esc(h) + '</option>'; }).join('') +
+          '</select></label>' +
+          '<label class="opt"><input type="checkbox" id="cc-dupfile"' + (IMP.dupFile ? ' checked' : '') + '><span>Ignorar números repetidos na planilha</span></label>' +
+          '<label class="opt"><input type="checkbox" id="cc-dupcamp"' + (IMP.dupCamp ? ' checked' : '') + '><span>Ignorar números que já estão nesta campanha</span></label>' +
+        '</div>' +
+        '<div class="cc-panel imp-stats" id="cc-stats"><div class="empty"><i class="spin" aria-hidden="true"></i>Conferindo os números…</div></div>' +
+      '</div>' +
+      '<div class="cc-panel imp-table"><h3>Prévia das primeiras linhas <span>Desmarque as colunas que não quer levar para a ficha.</span></h3>' +
+        '<div class="table-wrap"><table><thead><tr>' +
+          d.headers.map(function (h, i) {
+            var isPhone = i === IMP.phone;
+            return '<th class="' + (isPhone ? 'is-phone' : (IMP.cols[i] ? '' : 'off')) + '"><label>' +
+              '<input type="checkbox" data-col="' + i + '"' + (isPhone || IMP.cols[i] ? ' checked' : '') + (isPhone ? ' disabled' : '') + '>' +
+              '<span>' + esc(h) + '</span>' + (isPhone ? '<em>Telefone</em>' : (h.length > 30 ? '<em>nome cortado em 30 letras</em>' : '')) + '</label></th>';
+          }).join('') +
+        '</tr></thead><tbody>' +
+          d.sample.map(function (r) {
+            return '<tr>' + r.map(function (c, i) { return '<td class="' + (i === IMP.phone ? 'is-phone' : (IMP.cols[i] ? '' : 'off')) + '" title="' + esc(c) + '">' + esc(c) + '</td>'; }).join('') + '</tr>';
+          }).join('') +
+        '</tbody></table></div></div>' +
+      '<div class="imp-foot"><button type="button" class="btn ghost" data-imp="back">Cancelar</button>' +
+        '<button type="button" class="btn" id="cc-doimport" disabled>Importar</button></div>';
+    bindImp(v);
+    $('#cc-phonecol').addEventListener('change', function () { IMP.phone = parseInt(this.value, 10); IMP.cols[IMP.phone] = true; renderPreview(); analyze(); });
+    $('#cc-dupfile').addEventListener('change', function () { IMP.dupFile = this.checked; analyze(); });
+    $('#cc-dupcamp').addEventListener('change', function () { IMP.dupCamp = this.checked; analyze(); });
+    Array.prototype.forEach.call(v.querySelectorAll('input[data-col]'), function (cb) {
+      cb.addEventListener('change', function () {
+        var i = parseInt(cb.getAttribute('data-col'), 10); IMP.cols[i] = cb.checked;
+        Array.prototype.forEach.call(v.querySelectorAll('.imp-table tr'), function (tr) {
+          var cell = tr.children[i]; if (cell) cell.classList.toggle('off', !cb.checked);
+        });
+      });
+    });
+    if (IMP.stats) renderStats();
+  }
+
+  function renderStats() {
+    var st = IMP.stats, box = $('#cc-stats'); if (!box) return;
+    box.classList.remove('loading');
+    var item = function (n, label, cls, note) {
+      return '<div class="st ' + (cls || '') + (n ? '' : ' zero') + '"><b>' + nf(n) + '</b><span>' + label + '</span>' + (note ? '<small>' + note + '</small>' : '') + '</div>';
+    };
+    var h = '<h3>O que vai acontecer</h3><div class="sts">' +
+      item(st.will_import, st.will_import === 1 ? 'contato será importado' : 'contatos serão importados', 'ok') +
+      item(st.invalid, 'com telefone inválido', 'bad', st.invalid ? 'serão ignorados' : '') +
+      item(st.dup_file, 'repetidos na planilha', '', st.dup_file ? 'ignorados' : '') +
+      item(st.dup_campaign, 'já estão na campanha', '', st.dup_campaign ? 'ignorados' : '') +
+      item(st.dnc, 'na lista de não ligar', 'warn', st.dnc ? 'entram, mas o discador não liga' : '') +
+      '</div>';
+    if (st.invalid_lines && st.invalid_lines.length) {
+      h += '<details class="lines"><summary>Ver linhas com telefone inválido</summary><ul>' +
+        st.invalid_lines.map(function (l) { return '<li>Linha ' + l.line + ': <b>' + esc(l.value || '(vazio)') + '</b></li>'; }).join('') +
+        (st.invalid > st.invalid_lines.length ? '<li>e mais ' + nf(st.invalid - st.invalid_lines.length) + '</li>' : '') + '</ul></details>';
+    }
+    if (st.long_values && st.long_limit) {
+      h += '<div class="notice error"><p>' + plural(st.long_values, 'contato tem', 'contatos têm') + ' textos com mais de ' + st.long_limit +
+        ' caracteres, e o banco ainda não aceita textos longos. Rode "bash install.sh" no servidor antes de importar.</p></div>';
+    }
+    box.innerHTML = h;
+    var b = $('#cc-doimport');
+    var blocked = !st.will_import || (st.long_values && st.long_limit);
+    b.disabled = !!blocked;
+    b.textContent = st.will_import ? 'Importar ' + plural(st.will_import, 'contato', 'contatos') : 'Nada para importar';
+    b.onclick = doImport;
+  }
+
+  function doImport() {
+    if (IMP.busy) return;
+    IMP.busy = true;
+    var b = $('#cc-doimport'); b.disabled = true; b.textContent = 'Importando…';
+    var o = impOpts();
+    o.cols = Object.keys(IMP.cols).filter(function (i) { return IMP.cols[i]; });
+    if (o.cols.indexOf(String(IMP.phone)) === -1) o.cols.push(String(IMP.phone));   // nunca vazio: vazio = todas
+    api('import_commit', o, true).then(function (r) {
+      IMP.busy = false; renderDone(r);
+    }).catch(function (e) {
+      IMP.busy = false; b.disabled = false; b.textContent = 'Tentar de novo';
+      notice(e.message); window.scrollTo(0, 0);
+    });
+  }
+
+  function renderDone(r) {
+    var skipped = r.invalid + r.dup_file + r.dup_campaign;
+    var v = $('#cc-importview');
+    v.innerHTML = impHead() +
+      '<div class="cc-panel imp-done"><div class="big">' + plural(r.imported, 'contato importado', 'contatos importados') + '</div>' +
+        '<p>' + (skipped ? plural(skipped, 'linha foi ignorada', 'linhas foram ignoradas') + ' (' +
+          [r.invalid ? plural(r.invalid, 'telefone inválido', 'telefones inválidos') : '', r.dup_file ? plural(r.dup_file, 'repetido', 'repetidos') + ' na planilha' : '',
+           r.dup_campaign ? nf(r.dup_campaign) + ' já na campanha' : ''].filter(Boolean).join(', ') + ').' : 'Nenhuma linha foi ignorada.') +
+        (r.dnc ? ' ' + (r.dnc === 1 ? '1 número está na lista de não ligar e não será discado.' : nf(r.dnc) + ' números estão na lista de não ligar e não serão discados.') : '') + '</p>' +
+        (r.reopened ? '<p>A campanha estava finalizada e agora está inativa. Ative quando quiser começar a discar.</p>' : '') +
+        '<div class="done-acts"><button type="button" class="btn ghost" data-imp="more">Carregar outro arquivo</button>' +
+          '<button type="button" class="btn" data-imp="back">Voltar para campanhas</button></div></div>';
+    bindImp(v);
+  }
+
+  function bindImp(scope) {
+    scope.onclick = function (e) {
+      var b = e.target.closest('[data-imp]'); if (!b) return;
+      var a = b.getAttribute('data-imp');
+      if (a === 'back') leaveImport();
+      else if (a === 'again' || a === 'more') { IMP.data = null; IMP.stats = null; renderPick(); }
+    };
   }
 
   load().then(schedule);
