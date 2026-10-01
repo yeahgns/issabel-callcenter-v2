@@ -16,6 +16,33 @@
 class Panel_Ccxa
 {
     /*
+     * action=ccxa_ringing&rawmode=yes -> ligação tocando no ramal desta agente (antes de atender),
+     * com a ficha do contato quando for de campanha. &debug=1 inclui os canais vistos no Asterisk.
+     */
+    public static function handleJSON_ringing($module_name, $smarty, $local_templates_dir, $oPaloConsola, $estado)
+    {
+        if (!headers_sent()) header('Content-Type: application/json; charset=UTF-8');
+        $out = array('ok' => true, 'ringing' => false, 'now' => time());
+        try {
+            require_once 'modules/ccx_common/libs/bootstrap.php';
+            require_once 'modules/ccx_common/libs/RingingService.php';
+            $cc = isset($_SESSION['callcenter']) ? $_SESSION['callcenter'] : array();
+            // O aparelho que toca: no callback é o próprio canal da agente (ex.: PJSIP/210).
+            $device = isset($cc['agente']) ? (string) $cc['agente'] : '';
+            if ($device === '' || stripos($device, 'Agent/') === 0) $device = isset($cc['extension']) ? (string) $cc['extension'] : '';
+            if ($device === '') return json_encode($out);
+            $debug = !empty($_GET['debug']);
+            $svc = new CcxRinging(ccx_config(), ccx_pdo('cc'));
+            $r = $svc->forDevice($device, $debug);
+            if ($r) $out = array_merge($out, $r);
+            if ($debug) $out['debug'] = $svc->lastDebug;
+        } catch (Exception $e) {
+            $out = array('ok' => false, 'ringing' => false, 'error' => $e->getMessage());
+        }
+        return json_encode($out, JSON_UNESCAPED_UNICODE);
+    }
+
+    /*
      * action=ccxa_session&rawmode=yes -> início da sessão aberta e total logado hoje,
      * para a agente desta sessão do console. Roda dentro da sessão logada do motor.
      */
