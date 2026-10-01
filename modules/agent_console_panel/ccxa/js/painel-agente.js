@@ -151,27 +151,143 @@
       .catch(function () { S.ring = null; S.ringTimer = setTimeout(ringLoop, 5000); });
   }
 
-  function renderPreview(r) {
+  // Ficha do cliente a partir dos dados da planilha. Usada na prévia e no histórico.
+  function clientHtml(r) {
     var short = [], long = [];
     (r.attributes || []).forEach(function (a) { (isLong(a.value) ? long : short).push(a); });
     var name = r.name || (r.phone ? phoneBR(r.phone) || r.phone : 'Cliente');
     var phone = r.name && r.phone ? phoneBR(r.phone) || r.phone : '';
     var facts = (r.campaign ? [{ label: 'Campanha', value: r.campaign }] : []).concat(short);
+    return '<section class="panel"><div class="client-head"><div class="client-name">' + esc(name) + '</div>' +
+        (phone ? '<div class="client-phone">' + esc(phone) + '</div>' : '') + '</div>' +
+      '<div class="card-facts">' +
+        (facts.length ? '<dl class="pv-facts">' + facts.map(function (a) { return '<div><dt>' + esc(a.label) + '</dt><dd>' + esc(a.value) + '</dd></div>'; }).join('') + '</dl>' : '') +
+        long.map(function (a) { return '<div class="pv-long"><div class="lbl">' + esc(a.label) + '</div><div class="txt">' + esc(a.value) + '</div></div>'; }).join('') +
+        (!facts.length && !long.length ? '<p class="pv-none">Sem dados da planilha para esta ligação.</p>' : '') +
+      '</div></section>';
+  }
+  function wireLongs(scope) {
+    Array.prototype.forEach.call(scope.querySelectorAll('.pv-long'), function (box) { addMoreToggle(box, box.querySelector('.txt')); });
+  }
+
+  function renderPreview(r) {
     el.preview.innerHTML =
-      '<div class="call-grid"><div class="col">' +
-        '<section class="panel"><div class="client-head"><div class="client-name">' + esc(name) + '</div>' +
-          (phone ? '<div class="client-phone">' + esc(phone) + '</div>' : '') + '</div>' +
-          '<div class="card-facts">' +
-            (facts.length ? '<dl class="pv-facts">' + facts.map(function (a) { return '<div><dt>' + esc(a.label) + '</dt><dd>' + esc(a.value) + '</dd></div>'; }).join('') + '</dl>' : '') +
-            long.map(function (a) { return '<div class="pv-long"><div class="lbl">' + esc(a.label) + '</div><div class="txt">' + esc(a.value) + '</div></div>'; }).join('') +
-            (!facts.length && !long.length ? '<p class="pv-none">Sem dados da planilha para esta ligação.</p>' : '') +
-          '</div></section>' +
+      '<div class="call-grid"><div class="col">' + clientHtml(r) +
         (r.script && r.script.replace(/<[^>]*>|\s/g, '') ? '<section class="panel"><h2>Roteiro</h2><div class="script-body"><div class="pv-script">' + r.script + '</div></div></section>' : '') +
       '</div>' +
       '<section class="panel ring-note"><h2>Ligação chegando</h2>' +
         '<p class="panel-sub">Atenda o telefone para conectar. O registro da ligação aparece assim que ela conectar.</p></section>' +
       '</div>';
-    Array.prototype.forEach.call(el.preview.querySelectorAll('.pv-long'), function (box) { addMoreToggle(box, box.querySelector('.txt')); });
+    wireLongs(el.preview);
+  }
+
+  /* ---------- ligações de hoje ---------- */
+  function hhmm(ts) { var d = new Date(ts * 1000); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+  function durTxt(s) { if (s == null) return ''; s = Math.max(0, s | 0); return s < 60 ? s + 's' : Math.floor(s / 60) + 'min' + (s % 60 ? ' ' + pad2(s % 60) + 's' : ''); }
+  function apiGet(action, extra) {
+    return fetch(CFG.api + '&action=ccxa_' + action + (extra || ''), { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); }).then(function (j) { if (!j || !j.ok) throw new Error((j && j.error) || 'Erro'); return j; });
+  }
+
+  function loadHistory() {
+    clearTimeout(S.histTimer);
+    if (!CFG.api) return;
+    apiGet('history').then(function (j) { S.hist = j.calls; renderHistory(); })
+      .catch(function () { if (!S.hist) $('#ccxa-hlist').innerHTML = '<p class="h-empty">Não foi possível carregar as ligações de hoje.</p>'; })
+      .then(function () { S.histTimer = setTimeout(loadHistory, 60000); });
+  }
+
+  function renderHistory() {
+    var list = S.hist || [], pend = list.filter(function (c) { return c.record === 'pending' && !c.live; }).length;
+    $('#ccxa-hcount').textContent = list.length ? String(list.length) : '';
+    $('#ccxa-hfilter').innerHTML = [['all', 'Todas', list.length], ['pending', 'Pendentes', pend]].map(function (f) {
+      return '<button type="button" data-hf="' + f[0] + '" aria-pressed="' + (S.hf === f[0]) + '">' + f[1] + '<span class="n">' + f[2] + '</span></button>';
+    }).join('');
+    var rows = S.hf === 'pending' ? list.filter(function (c) { return c.record === 'pending' && !c.live; }) : list;
+    if (!rows.length) {
+      $('#ccxa-hlist').innerHTML = '<p class="h-empty">' + (list.length ? 'Nenhum registro pendente. Tudo em dia.' : 'Nenhuma ligação atendida hoje ainda.') + '</p>';
+      return;
+    }
+    var BADGE = { done: ['ok', 'Registrado'], pending: ['pend', 'Registro pendente'], none: ['none', 'Sem formulário'] };
+    $('#ccxa-hlist').innerHTML = rows.map(function (c) {
+      var b = c.live ? ['live', 'Em andamento'] : BADGE[c.record] || BADGE.none;
+      var who = c.name ? '<b>' + esc(c.name) + '</b><span>' + esc(phoneBR(c.phone) || c.phone) + '</span>' : '<b>' + esc(phoneBR(c.phone) || c.phone) + '</b>';
+      return '<button type="button" class="h-row" data-hid="' + c.id + '"' + (c.live ? ' disabled title="Em andamento: use o registro da ligação acima"' : '') + '>' +
+        '<span class="h-time">' + hhmm(c.start) + '</span><span class="h-who">' + who + '</span>' +
+        '<span class="h-camp">' + esc(c.campaign) + '</span><span class="h-dur">' + esc(durTxt(c.duration)) + '</span>' +
+        '<span class="h-badge ' + b[0] + '">' + b[1] + '</span></button>';
+    }).join('');
+  }
+
+  function openDetail(id) {
+    var d = $('#ccxa-drawer');
+    d.innerHTML = '<div class="dr-body"><p class="h-empty">Carregando…</p></div>';
+    d.hidden = false; $('#ccxa-dback').hidden = false;
+    apiGet('detail', '&id=' + id).then(function (j) { renderDetail(j.call); })
+      .catch(function (e) { d.innerHTML = '<div class="dr-head"><h2>Ligação</h2><button type="button" class="dr-x" data-dclose aria-label="Fechar">✕</button></div><div class="dr-body"><p class="dr-err">' + esc(e.message) + '</p></div>'; });
+  }
+  function closeDetail() { $('#ccxa-drawer').hidden = true; $('#ccxa-dback').hidden = true; }
+
+  function fieldHtml(fid, f, val) {
+    var v = val == null ? '' : String(val), name = 'f-' + fid + '-' + f.id;
+    if (f.type === 'LABEL') return '<div class="df-label">' + esc(f.label) + '</div>';
+    var ctl;
+    if (f.type === 'LIST') {
+      var opts = f.options.slice(); if (v && opts.indexOf(v) === -1) opts.unshift(v);
+      ctl = '<select name="' + name + '"><option value="">Escolha</option>' + opts.map(function (o) { return '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>';
+    } else if (f.type === 'TEXTAREA') {
+      ctl = '<textarea name="' + name + '" maxlength="250" rows="4">' + esc(v) + '</textarea><small class="df-count">' + v.length + '/250</small>';
+    } else if (f.type === 'DATE') {
+      ctl = '<input type="date" name="' + name + '" value="' + esc(/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : '') + '">';
+    } else {
+      ctl = '<input type="text" name="' + name + '" maxlength="250" value="' + esc(v) + '">';
+    }
+    return '<label class="df"><span>' + esc(f.label) + '</span>' + ctl + '</label>';
+  }
+
+  function renderDetail(c) {
+    var d = $('#ccxa-drawer');
+    var forms = c.forms || [];
+    var formsHtml = forms.length ? forms.map(function (f) {
+      return (forms.length > 1 ? '<h3>' + esc(f.name) + '</h3>' : '') + f.fields.map(function (x) { return fieldHtml(f.id, x, c.values[x.id]); }).join('');
+    }).join('') : '<p class="h-empty">Esta campanha não tem formulário.</p>';
+    d.innerHTML =
+      '<div class="dr-head"><div><h2>Ligação das ' + hhmm(c.start) + '</h2><p>' + esc(c.campaign) + (c.duration != null ? ', ' + esc(durTxt(c.duration)) : '') + '</p></div>' +
+        '<button type="button" class="dr-x" data-dclose aria-label="Fechar">✕</button></div>' +
+      '<form class="dr-body" id="ccxa-dform" novalidate>' + clientHtml(c) +
+        (c.script && c.script.replace(/<[^>]*>|\s/g, '') ? '<details class="dr-script"><summary>Roteiro da campanha</summary><div class="pv-script">' + c.script + '</div></details>' : '') +
+        '<section class="panel dr-form"><h2>Registro da ligação</h2><div class="dr-fields">' + formsHtml + '</div>' +
+          '<p class="dr-msg" id="ccxa-dmsg" role="status" aria-live="polite"></p></section>' +
+      '</form>' +
+      (forms.length ? '<div class="dr-foot"><button type="button" class="dr-btn ghost" data-dclose>Fechar</button><button type="button" class="dr-btn" id="ccxa-dsave">Salvar registro</button></div>' : '');
+    wireLongs(d);
+    Array.prototype.forEach.call(d.querySelectorAll('textarea[maxlength]'), function (t) {
+      t.addEventListener('input', function () { var c2 = t.parentNode.querySelector('.df-count'); if (c2) c2.textContent = t.value.length + '/250'; });
+    });
+    var sv = $('#ccxa-dsave');
+    if (sv) sv.addEventListener('click', function () { saveDetail(c, sv); });
+  }
+
+  function saveDetail(c, btn) {
+    var data = {}, f = $('#ccxa-dform');
+    Array.prototype.forEach.call(f.querySelectorAll('[name^="f-"]'), function (x) {
+      var m = x.name.match(/^f-(\d+)-(\d+)$/); if (!m) return;
+      (data[m[1]] = data[m[1]] || {})[m[2]] = x.value;
+    });
+    var msg = $('#ccxa-dmsg');
+    btn.disabled = true; btn.textContent = 'Salvando…'; msg.className = 'dr-msg'; msg.textContent = '';
+    var body = new URLSearchParams(); body.set('id', c.id); body.set('data', JSON.stringify(data));
+    fetch(CFG.api + '&action=ccxa_record', { method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CCX-Token': CFG.token || '', Accept: 'application/json' }, body: body.toString() })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) throw new Error((j && j.error) || 'Não foi possível salvar.');
+        msg.className = 'dr-msg ok'; msg.textContent = 'Registro salvo.';
+        loadHistory();
+        setTimeout(closeDetail, 700);
+      })
+      .catch(function (e) { msg.className = 'dr-msg err'; msg.textContent = e.message; })
+      .then(function () { btn.disabled = false; btn.textContent = 'Salvar registro'; });
   }
 
   function isZero(s) { return !s || /^0?0:00:00$/.test(s.trim()); }
@@ -282,6 +398,7 @@
     sync();
     loadSession(0);
     ringLoop();
+    loadHistory();
     document.addEventListener('visibilitychange', function () { if (!document.hidden) ringLoop(); });
     setInterval(function () { if (S.sessStart || S.ring) sync(); }, 1000);
   }
@@ -353,8 +470,22 @@
         '<span class="spacer"></span>' +
         '<button type="button" class="btn-break" id="ccxa-break">Pausa</button>' +
         '<button type="button" class="btn-logout" id="ccxa-logout">Encerrar sessão</button>' +
-      '</div>';
+      '</div>' +
+      '<section class="panel hist" aria-labelledby="ccxa-htitle">' +
+        '<div class="h-head"><h2 id="ccxa-htitle">Ligações de hoje <span id="ccxa-hcount"></span></h2>' +
+          '<div class="h-seg" id="ccxa-hfilter" role="group" aria-label="Filtrar ligações"></div></div>' +
+        '<p class="panel-sub">Clique numa ligação para ver a ficha e completar o registro, mesmo depois que o cliente desligou.</p>' +
+        '<div class="h-list" id="ccxa-hlist"><p class="h-empty">Carregando…</p></div>' +
+      '</section>' +
+      '<div class="ccxa-dback" id="ccxa-dback" hidden></div>' +
+      '<aside class="ccxa-drawer" id="ccxa-drawer" hidden role="dialog" aria-modal="true" aria-label="Ligação"></aside>';
     area.appendChild(root);
+    S.hf = 'all';
+    $('#ccxa-hfilter').addEventListener('click', function (e) { var b = e.target.closest('[data-hf]'); if (b) { S.hf = b.getAttribute('data-hf'); renderHistory(); } });
+    $('#ccxa-hlist').addEventListener('click', function (e) { var b = e.target.closest('[data-hid]'); if (b && !b.disabled) openDetail(parseInt(b.getAttribute('data-hid'), 10)); });
+    $('#ccxa-dback').addEventListener('click', closeDetail);
+    $('#ccxa-drawer').addEventListener('click', function (e) { if (e.target.closest('[data-dclose]')) closeDetail(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('#ccxa-drawer').hidden) closeDetail(); });
 
     el.bar = $('#ccxa-bar'); el.label = $('#ccxa-label'); el.sub = $('#ccxa-sub');
     el.timer = $('#ccxa-timer'); el.total = $('#ccxa-total'); el.who = $('#ccxa-who');
@@ -387,6 +518,10 @@
 
   function sync() {
     var info = currentState();
+    // Ligação acabou de terminar: atualiza o histórico (o discador grava o fim logo depois).
+    var wasCall = S.key === 'oncall' || S.key === 'hold' || S.key === 'ringing';
+    if (wasCall && info.key !== 'oncall' && info.key !== 'hold' && info.key !== 'ringing') setTimeout(loadHistory, 2000);
+    if (!wasCall && info.key === 'oncall') setTimeout(loadHistory, 2000);
     S.key = info.key;
     el.bar.className = 'bar st-' + info.key;
     el.label.textContent = info.label;
