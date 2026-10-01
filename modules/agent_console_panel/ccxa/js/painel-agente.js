@@ -133,6 +133,47 @@
       })
       .catch(function () { if ((tries || 0) < 3) setTimeout(function () { loadSession((tries || 0) + 1); }, 5000); });
   }
+  /* Ligação tocando no ramal, antes de atender (action=ccxa_ringing). Só consulta com a agente
+     disponível e a aba visível; o motor assume quando a ligação conecta. */
+  function ringLoop() {
+    clearTimeout(S.ringTimer);
+    if (!CFG.api || document.hidden) return;
+    if (S.key !== 'idle') { if (S.ring) { S.ring = null; sync(); } S.ringTimer = setTimeout(ringLoop, 1500); return; }
+    fetch(CFG.api + '&action=ccxa_ringing', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var was = !!S.ring;
+        S.ring = (j && j.ringing && S.key === 'idle') ? j : null;
+        if (S.ring) S.ringOffset = j.now - Date.now() / 1000;
+        if (was || S.ring) sync();
+        S.ringTimer = setTimeout(ringLoop, 1500);
+      })
+      .catch(function () { S.ring = null; S.ringTimer = setTimeout(ringLoop, 5000); });
+  }
+
+  function renderPreview(r) {
+    var short = [], long = [];
+    (r.attributes || []).forEach(function (a) { (isLong(a.value) ? long : short).push(a); });
+    var name = r.name || (r.phone ? phoneBR(r.phone) || r.phone : 'Cliente');
+    var phone = r.name && r.phone ? phoneBR(r.phone) || r.phone : '';
+    var facts = (r.campaign ? [{ label: 'Campanha', value: r.campaign }] : []).concat(short);
+    el.preview.innerHTML =
+      '<div class="call-grid"><div class="col">' +
+        '<section class="panel"><div class="client-head"><div class="client-name">' + esc(name) + '</div>' +
+          (phone ? '<div class="client-phone">' + esc(phone) + '</div>' : '') + '</div>' +
+          '<div class="card-facts">' +
+            (facts.length ? '<dl class="pv-facts">' + facts.map(function (a) { return '<div><dt>' + esc(a.label) + '</dt><dd>' + esc(a.value) + '</dd></div>'; }).join('') + '</dl>' : '') +
+            long.map(function (a) { return '<div class="pv-long"><div class="lbl">' + esc(a.label) + '</div><div class="txt">' + esc(a.value) + '</div></div>'; }).join('') +
+            (!facts.length && !long.length ? '<p class="pv-none">Sem dados da planilha para esta ligação.</p>' : '') +
+          '</div></section>' +
+        (r.script && r.script.replace(/<[^>]*>|\s/g, '') ? '<section class="panel"><h2>Roteiro</h2><div class="script-body"><div class="pv-script">' + r.script + '</div></div></section>' : '') +
+      '</div>' +
+      '<section class="panel ring-note"><h2>Ligação chegando</h2>' +
+        '<p class="panel-sub">Atenda o telefone para conectar. O registro da ligação aparece assim que ela conectar.</p></section>' +
+      '</div>';
+    Array.prototype.forEach.call(el.preview.querySelectorAll('.pv-long'), function (box) { addMoreToggle(box, box.querySelector('.txt')); });
+  }
+
   function isZero(s) { return !s || /^0?0:00:00$/.test(s.trim()); }
 
   function currentState() {
@@ -177,6 +218,10 @@
                : /^name|nombre|nome/.test(label) ? 'name'
                : 'attr';
       tr.setAttribute('data-ccxa', kind);
+      if (kind === 'attr') {
+        var vcell = tr.querySelector('td:last-child');
+        if (vcell && vcell !== cell && isLong(vcell.textContent)) { tr.setAttribute('data-long', '1'); addMoreToggle(tr, vcell); }
+      }
       var PT = { campaign: 'Campanha', callid: 'ID interno da ligação', phone: 'Telefone', name: 'Nome' };
       var lab = cell.querySelector('label') || cell;
       var txt = PT[kind] || lab.textContent.replace(/:\s*$/, '').trim();
@@ -187,6 +232,22 @@
     if (f) f.querySelectorAll('td > label').forEach(function (l) {
       var t = l.textContent.replace(/:\s*$/, '').trim();
       if (l.textContent !== t) l.textContent = t;
+    });
+  }
+
+  /* Texto longo (ex.: uma coluna "Contexto"): sai da grade e vira um bloco de leitura. */
+  function isLong(t) { t = String(t || '').trim(); return t.length > 90 || /\n/.test(t); }
+  // Mostra "Mostrar tudo" só quando o texto passa das linhas visíveis.
+  function addMoreToggle(holder, box) {
+    requestAnimationFrame(function () {
+      if (box.scrollHeight <= box.clientHeight + 2 || holder.querySelector('.ccxa-more')) return;
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'ccxa-more'; b.textContent = 'Mostrar tudo';
+      b.addEventListener('click', function () {
+        var open = holder.classList.toggle('open');
+        b.textContent = open ? 'Mostrar menos' : 'Mostrar tudo';
+      });
+      holder.appendChild(b);
     });
   }
 
@@ -220,7 +281,9 @@
     });
     sync();
     loadSession(0);
-    setInterval(function () { if (S.sessStart) sync(); }, 1000);
+    ringLoop();
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) ringLoop(); });
+    setInterval(function () { if (S.sessStart || S.ring) sync(); }, 1000);
   }
 
   /* Move um bloco do motor para dentro de um destino nosso, lembrando de onde veio. */
@@ -279,6 +342,7 @@
             '<span class="act-host" id="ccxa-host-transfer"></span>' +
           '</div>' +
         '</div>' +
+        '<div id="ccxa-preview" hidden></div>' +
         '<div class="idle-card" id="ccxa-idle" hidden></div>' +
       '</div>' +
       '<div class="session">' +
@@ -296,6 +360,7 @@
     el.timer = $('#ccxa-timer'); el.total = $('#ccxa-total'); el.who = $('#ccxa-who');
     el.callcard = $('#ccxa-callcard'); el.idle = $('#ccxa-idle');
     el.actions = $('#ccxa-actions'); el.break = $('#ccxa-break'); el.logout = $('#ccxa-logout');
+    el.preview = $('#ccxa-preview');
     el.shSess = $('#ccxa-sh-sess'); el.shLogin = $('#ccxa-sh-login'); el.shBreak = $('#ccxa-sh-break'); el.shHold = $('#ccxa-sh-hold');
 
     // Move os blocos nativos para dentro do layout. Feito uma vez; o motor segue atualizando o conteudo.
@@ -363,7 +428,18 @@
     var sp = $('#ccxa-scriptpanel');
     if (sp) sp.hidden = !hasScript();
     var hasCall = (info.key === 'oncall' || info.key === 'hold' || info.key === 'ringing');
-    if (hasCall && (card.phone || card.name)) {
+    var ring = (!hasCall && info.key === 'idle') ? S.ring : null;
+    if (ring) {
+      el.bar.className = 'bar st-ringing';
+      el.label.textContent = 'Ligação chegando';
+      el.sub.textContent = ring.campaign ? 'Campanha ' + ring.campaign + '. Atenda o telefone para conectar.' : 'Atenda o telefone para conectar.';
+      el.timer.textContent = hms(Date.now() / 1000 + (S.ringOffset || 0) - ring.since);
+      if (totalBox) totalBox.style.display = 'flex';
+    }
+    if (ring) {
+      el.who.hidden = false;
+      el.who.innerHTML = (ring.name ? '<b>' + esc(ring.name) + '</b>' : '') + (ring.phone ? '<span>' + esc(phoneBR(ring.phone) || ring.phone) + '</span>' : '');
+    } else if (hasCall && (card.phone || card.name)) {
       el.who.hidden = false;
       el.who.innerHTML = (card.name ? '<b>' + esc(card.name) + '</b>' : '') +
         (card.phone ? '<span>' + esc(phoneBR(card.phone) || card.phone) + '</span>' : '');
@@ -379,11 +455,16 @@
     el.break.classList.toggle('on', info.key === 'break');
     el.break.textContent = info.key === 'break' ? 'Sair da pausa' : 'Pausa';
 
-    var mode = hasCall ? 'call' : (info.key === 'break' ? 'break' : 'idle');
-    if (mode !== S.shownMode) {
-      S.shownMode = mode;
+    var mode = hasCall ? 'call' : (ring ? 'ring' : (info.key === 'break' ? 'break' : 'idle'));
+    var ringSig = ring ? (ring.call_id || '') + '|' + ring.phone : '';
+    if (mode !== S.shownMode || ringSig !== S.ringSig) {
+      S.shownMode = mode; S.ringSig = ringSig;
+      el.preview.hidden = mode !== 'ring';
       if (mode === 'call') {
         el.callcard.hidden = false; el.idle.hidden = true;
+      } else if (mode === 'ring') {
+        el.callcard.hidden = true; el.idle.hidden = true;
+        renderPreview(ring);
       } else {
         el.callcard.hidden = true; el.idle.hidden = false;
         el.idle.className = 'idle-card' + (mode === 'break' ? ' paused' : '');
