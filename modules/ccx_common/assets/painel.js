@@ -17,10 +17,11 @@
   };
 
   var STATE = {
-    free:    { label: 'Disponível', order: 1 },
-    oncall:  { label: 'Em ligação', order: 0 },
-    paused:  { label: 'Em pausa',   order: 2 },
-    offline: { label: 'Offline',    order: 3 }
+    ringing: { label: 'Tocando',    order: 0 },
+    free:    { label: 'Disponível', order: 2 },
+    oncall:  { label: 'Em ligação', order: 1 },
+    paused:  { label: 'Em pausa',   order: 3 },
+    offline: { label: 'Offline',    order: 4 }
   };
 
   /* ---------- utilidades (mesmas regras do relatório de ligações) ---------- */
@@ -207,13 +208,13 @@
   }
 
   function counts(agents) {
-    var c = { free: 0, oncall: 0, paused: 0, offline: 0 };
+    var c = { free: 0, ringing: 0, oncall: 0, paused: 0, offline: 0 };
     agents.forEach(function (a) { c[a.status] = (c[a.status] || 0) + 1; });
     return c;
   }
 
   function renderOverview() {
-    var d = S.data, c = counts(d.agents), online = c.free + c.oncall + c.paused;
+    var d = S.data, c = counts(d.agents), online = c.free + c.ringing + c.oncall + c.paused;
     var waiting = [], answered = 0, abandoned = 0, hasToday = false;
     d.queues.forEach(function (q) {
       q.waiting.forEach(function (w) { waiting.push(w); });
@@ -221,7 +222,7 @@
     });
     var oldest = waiting.reduce(function (m, w) { return w.since && (!m || w.since < m) ? w.since : m; }, null);
     var late = oldest && nowSrv() - oldest > d.service_level;
-    var total = c.free + c.oncall + c.paused + c.offline;
+    var total = c.free + c.ringing + c.oncall + c.paused + c.offline;
 
     var h = '<dl class="metrics">' +
       '<div class="metric"><dt>Disponíveis</dt><dd>' + nf(c.free) + '<small>de ' + nf(online) + ' online</small></dd></div>' +
@@ -236,10 +237,10 @@
     '</dl>';
     if (total) {
       h += '<div class="dist" aria-hidden="true">' +
-        ['oncall', 'free', 'paused', 'offline'].map(function (k) {
+        ['oncall', 'ringing', 'free', 'paused', 'offline'].map(function (k) {
           return '<span class="s-' + k + '" style="width:' + (c[k] / total * 100) + '%"></span>';
         }).join('') + '</div>' +
-        '<p class="legend">' + ['oncall', 'free', 'paused', 'offline'].map(function (k) {
+        '<p class="legend">' + ['oncall', 'ringing', 'free', 'paused', 'offline'].filter(function (k) { return k !== 'ringing' || c.ringing; }).map(function (k) {
           return '<span><i class="sw s-' + k + '"></i>' + STATE[k].label + ' <b>' + nf(c[k]) + '</b></span>';
         }).join('') + '</p>';
     }
@@ -249,7 +250,7 @@
   function agentState(a) {
     var st = STATE[a.status];
     var elapsed = a.since ? nowSrv() - a.since : 0;
-    var timed = a.since && (a.status === 'oncall' || a.status === 'paused' || (a.status === 'free' && a.since_exact));
+    var timed = a.since && (a.status === 'oncall' || a.status === 'paused' || ((a.status === 'free' || a.status === 'ringing') && a.since_exact));
     var h = '<b>' + st.label + (timed ? ' há' : '') + '</b>';
     if (a.status === 'oncall') {
       h += since(a.since);
@@ -259,6 +260,9 @@
         h += '<span class="sub">' + (a.call.type === 'outgoing' ? 'Para ' : 'De ') + esc(phone(a.call.phone)) +
           (where ? ', ' + esc(where) : '') + '</span>';
       }
+    } else if (a.status === 'ringing') {
+      if (a.since_exact) h += since(a.since);
+      h += '<span class="sub">Ligação da fila chegando no ramal</span>';
     } else if (a.status === 'paused') {
       h += since(a.since, elapsed > LONG_PAUSE ? 't long' : 't');
       h += '<span class="sub">' + esc(a.pause || 'Pausa') + '</span>';
@@ -275,8 +279,10 @@
     var d = S.data;
     if (!d) return;
     var c = counts(d.agents);
-    var filters = [['all', 'Todos', d.agents.length], ['free', 'Disponíveis', c.free], ['oncall', 'Em ligação', c.oncall],
-      ['paused', 'Em pausa', c.paused], ['offline', 'Offline', c.offline]];
+    var filters = [['all', 'Todos', d.agents.length], ['free', 'Disponíveis', c.free]]
+      .concat(c.ringing || S.filter === 'ringing' ? [['ringing', 'Tocando', c.ringing]] : [])
+      .concat([['oncall', 'Em ligação', c.oncall],
+      ['paused', 'Em pausa', c.paused], ['offline', 'Offline', c.offline]]);
     $('ccx-filter').innerHTML = filters.map(function (f) {
       return '<button type="button" data-f="' + f[0] + '" aria-pressed="' + (S.filter === f[0]) + '">' +
         f[1] + '<span class="n">' + nf(f[2]) + '</span></button>';
@@ -350,6 +356,7 @@
       var ag = q.agents, parts = [];
       if (ag.free) parts.push(plural(ag.free, 'disponível', 'disponíveis'));
       if (ag.oncall) parts.push(nf(ag.oncall) + ' em ligação');
+      if (ag.ringing) parts.push(nf(ag.ringing) + ' tocando');
       if (ag.paused) parts.push(nf(ag.paused) + ' em pausa');
       h += '<div class="q-foot"><span>' + (parts.length ? '<b>Agentes:</b> ' + parts.join(', ') : 'Nenhuma agente online nesta fila') + '</span>';
       if (q.today) {
