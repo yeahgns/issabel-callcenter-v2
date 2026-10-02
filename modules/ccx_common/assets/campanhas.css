@@ -252,3 +252,9 @@ body.ccxc-page { perspective: none !important; -webkit-perspective: none !import
 @media (prefers-reduced-motion: reduce) { .ccxc .spin { animation: none; } }
 :is(#ccx-campanhas, #ccx-formularios) .imp-table th label, :is(#ccx-campanhas, #ccx-formularios) .opt { color: var(--ink) !important; }
 :is(#ccx-campanhas, #ccx-formularios) .imp-table th.off label { color: var(--faint) !important; }
+
+/* opção "Detectar caixa postal" no formulário da campanha */
+:is(#ccx-campanhas, #ccx-formularios) .amd-opt { padding: 12px; margin: 4px 0 16px; border: 1px solid var(--line); border-radius: 10px; background: #FAFBFD; }
+:is(#ccx-campanhas, #ccx-formularios) .amd-opt b { display: block; font-weight: 600; font-size: 14px; color: var(--ink); }
+:is(#ccx-campanhas, #ccx-formularios) .amd-opt small { display: block; font-size: 12.5px; color: var(--muted); margin-top: 3px; line-height: 1.45; font-weight: 400; }
+:is(#ccx-campanhas, #ccx-formularios) .amd-opt input { width: 16px !important; height: 16px !important; min-height: 0 !important; margin: 2px 0 0 !important; padding: 0 !important; accent-color: var(--brand); flex: none; }
