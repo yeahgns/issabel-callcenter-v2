@@ -94,7 +94,6 @@
 .ccx .s-free { background: var(--ok); }
 .ccx .s-oncall { background: var(--brand); }
 .ccx .s-paused { background: var(--pause); }
-.ccx .s-ringing { background: #0E9FB8; }
 .ccx .s-offline { background: #C9D3DF; }
 
 /* ---------- grade principal ---------- */
@@ -139,7 +138,6 @@
 .ccx .st-free .state > b { color: var(--ok); }
 .ccx .st-oncall .state > b { color: var(--brand-ink); }
 .ccx .st-paused .state > b { color: var(--pause); }
-.ccx .st-ringing .state > b { color: #0B7F93; }
 .ccx .st-offline .state > b { color: var(--faint); font-weight: 500; }
 .ccx .tag {
   display: inline-block; font-size: 11.5px; font-weight: 600; border-radius: 5px; padding: 0 6px;
