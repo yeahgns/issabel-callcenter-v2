@@ -84,13 +84,28 @@ exten => _X.,1,NoOp(CCX: verificando caixa postal antes da fila ${EXTEN})
 ; <<< ccx-amd (Call Center Plus)
 DIALPLAN
 chown asterisk:asterisk "$CUSTOM" 2>/dev/null || true
+# Sem pipes com grep -q aqui: com "set -o pipefail", o grep -q fecha a saída cedo e o pipe
+# inteiro parece falho mesmo quando o texto foi encontrado. Guardamos a saída numa variável.
 if command -v asterisk >/dev/null && asterisk -rx "core show version" >/dev/null 2>&1; then
-    asterisk -rx "module show like app_amd" | grep -q app_amd || asterisk -rx "module load app_amd.so" >/dev/null 2>&1
-    if asterisk -rx "module show like app_amd" | grep -q app_amd; then
-        asterisk -rx "dialplan reload" >/dev/null
-    else
-        echo "   Aviso: o módulo app_amd não está disponível no Asterisk; a detecção de caixa postal não vai funcionar."
-    fi
+    AMDMOD=$(asterisk -rx "module show like app_amd" 2>/dev/null || true)
+    case "$AMDMOD" in
+        *app_amd*) ;;
+        *) asterisk -rx "module load app_amd.so" >/dev/null 2>&1 || true
+           AMDMOD=$(asterisk -rx "module show like app_amd" 2>/dev/null || true) ;;
+    esac
+    asterisk -rx "dialplan reload" >/dev/null 2>&1 || true
+    CTX=$(asterisk -rx "dialplan show ccx-amd" 2>/dev/null || true)
+    case "$CTX" in
+        *"AMD()"*) echo "   Detecção de caixa postal carregada no Asterisk." ;;
+        *) echo "   ERRO: o Asterisk não carregou o contexto ccx-amd. Campanhas com \"Detectar caixa postal\" não vão discar."
+           echo "         Confira: asterisk -rx \"dialplan show ccx-amd\"" ;;
+    esac
+    case "$AMDMOD" in
+        *app_amd*) ;;
+        *) echo "   Aviso: o módulo app_amd não está carregado no Asterisk; a detecção de caixa postal não vai funcionar." ;;
+    esac
+else
+    echo "   Aviso: Asterisk não está rodando; rode depois: asterisk -rx \"dialplan reload\""
 fi
 
 say "Conferindo a correção de segurança do campaign_monitoring/libs/api.php"
