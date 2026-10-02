@@ -129,6 +129,30 @@ class CcxRinging
         return $list;
     }
 
+    /** Executa um comando do CLI do Asterisk pela AMI e devolve a saída em texto. */
+    public function command($cmd)
+    {
+        $c = $this->amiCredentials();
+        $s = @fsockopen($c['host'], $c['port'], $errno, $errstr, 2);
+        if (!$s) throw new Exception('Asterisk (AMI) indisponível: ' . $errstr);
+        stream_set_timeout($s, 3);
+        fgets($s);
+        fwrite($s, "Action: Login\r\nUsername: {$c['user']}\r\nSecret: {$c['pass']}\r\nEvents: off\r\n\r\n");
+        $login = $this->readBlock($s);
+        if (stripos(isset($login['Response']) ? $login['Response'] : '', 'Success') === false) { fclose($s); throw new Exception('Login na AMI recusado.'); }
+        fwrite($s, "Action: Command\r\nCommand: " . str_replace(array("\r", "\n"), ' ', $cmd) . "\r\n\r\n");
+        $out = array();
+        while (($line = fgets($s)) !== false) {
+            $line = rtrim($line, "\r\n");
+            if ($line === '' && $out) break;
+            if (strpos($line, 'Output: ') === 0) $out[] = substr($line, 8);
+            elseif (strpos($line, 'Response:') !== 0 && strpos($line, 'Message:') !== 0 && strpos($line, 'ActionID:') !== 0 && $line !== '' && strpos($line, '--END COMMAND--') === false) $out[] = $line;
+        }
+        fwrite($s, "Action: Logoff\r\n\r\n");
+        fclose($s);
+        return implode("\n", $out);
+    }
+
     private function readBlock($s)
     {
         $b = array();
