@@ -98,6 +98,14 @@ class CcxCampaignService
             foreach ($urls as $k => $u) $urls[$k] = ($u === '' || $u === null) ? null : (int) $u;
         }
 
+        // "Detectar caixa postal": a ligação atendida passa pelo contexto ccx-amd (AMD) antes da fila.
+        // Só troca entre os dois contextos conhecidos; um contexto próprio de outra configuração fica.
+        if (isset($in['amd'])) {
+            $wantAmd = !empty($in['amd']) && $in['amd'] !== '0';
+            if ($wantAmd) $context = 'ccx-amd';
+            elseif ($context === 'ccx-amd') $context = 'from-internal';
+        }
+
         $this->pDB->beginTransaction();
         $ok = true;
         if ($isNew) {
@@ -189,6 +197,8 @@ class CcxCampaignService
             'date_from' => $r['datetime_init'], 'date_to' => $r['datetime_end'],
             'time_from' => substr($r['daytime_init'], 0, 5), 'time_to' => substr($r['daytime_end'], 0, 5),
             'script' => (string) $r['script'],
+            'amd' => $r['context'] === 'ccx-amd',
+            'context' => (string) $r['context'],
             'avg_sec' => $r['promedio'] !== null ? (int) $r['promedio'] : null,
             'totals' => array(
                 'total' => (int) $r['total_calls'], 'pending' => (int) $r['pending_calls'], 'completed' => (int) $r['num_completadas'],
