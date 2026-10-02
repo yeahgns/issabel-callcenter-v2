@@ -64,6 +64,35 @@ if [ ! -f /etc/issabel/ccx.conf.php ]; then
     chmod 640 /etc/issabel/ccx.conf.php
 fi
 
+say "Instalando a detecção de caixa postal (contexto ccx-amd) no dialplan"
+# A campanha manda a ligação atendida para Context/Exten (Exten = fila). Com "Detectar caixa
+# postal" ligado, o Context é ccx-amd: o Asterisk escuta os primeiros segundos com AMD() e, se
+# for gravação (caixa postal, recado da operadora), desliga antes da fila. O discador marca
+# como NoAnswer e o número volta para as tentativas. Pessoa ou dúvida seguem para a fila.
+CUSTOM=/etc/asterisk/extensions_custom.conf
+touch "$CUSTOM"
+sed -i '/^; >>> ccx-amd (Call Center Plus)/,/^; <<< ccx-amd (Call Center Plus)/d' "$CUSTOM"
+cat >> "$CUSTOM" <<'DIALPLAN'
+; >>> ccx-amd (Call Center Plus) - gerado pelo install.sh, não edite entre estas marcas
+[ccx-amd]
+exten => _X.,1,NoOp(CCX: verificando caixa postal antes da fila ${EXTEN})
+ same => n,AMD()
+ same => n,NoOp(CCX AMD: ${AMDSTATUS} ${AMDCAUSE})
+ same => n,GotoIf($["${AMDSTATUS}" = "MACHINE"]?gravacao)
+ same => n,Goto(from-internal,${EXTEN},1)
+ same => n(gravacao),Hangup(16)
+; <<< ccx-amd (Call Center Plus)
+DIALPLAN
+chown asterisk:asterisk "$CUSTOM" 2>/dev/null || true
+if command -v asterisk >/dev/null && asterisk -rx "core show version" >/dev/null 2>&1; then
+    asterisk -rx "module show like app_amd" | grep -q app_amd || asterisk -rx "module load app_amd.so" >/dev/null 2>&1
+    if asterisk -rx "module show like app_amd" | grep -q app_amd; then
+        asterisk -rx "dialplan reload" >/dev/null
+    else
+        echo "   Aviso: o módulo app_amd não está disponível no Asterisk; a detecção de caixa postal não vai funcionar."
+    fi
+fi
+
 say "Conferindo a correção de segurança do campaign_monitoring/libs/api.php"
 if [ -f "$WEB/campaign_monitoring/libs/api.php" ]; then
     php setup/fix-campaign-monitoring-api.php || echo "   Aviso: o arquivo mudou no upstream e a correção automática não se aplica. Revise-o manualmente."
