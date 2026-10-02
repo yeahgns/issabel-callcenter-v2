@@ -78,7 +78,8 @@ class CcxLiveProvider
         if (!is_array($byQueue)) throw new Exception($consola->errMsg);
         $this->raw['agents_by_queue'] = $byQueue;
 
-        $map = array('online' => 'free', 'oncall' => 'oncall', 'paused' => 'paused', 'offline' => 'offline');
+        // 'ringing': o discador informa quando o ramal está tocando com ligação da fila (queue_status 6).
+        $map = array('online' => 'free', 'ringing' => 'ringing', 'oncall' => 'oncall', 'paused' => 'paused', 'offline' => 'offline');
         $agents = array();
         foreach ($byQueue as $queue => $list) {
             foreach ($list as $chan => $a) {
@@ -306,14 +307,14 @@ class CcxLiveProvider
             'name'    => isset($names[$num]) ? $names[$num] : null,
             'kind'    => $kind,
             'waiting' => array(),
-            'agents'  => array('free' => 0, 'oncall' => 0, 'paused' => 0, 'offline' => 0),
+            'agents'  => array('free' => 0, 'ringing' => 0, 'oncall' => 0, 'paused' => 0, 'offline' => 0),
             'today'   => null,
         );
     }
 
     private function countStates(array $agents, $queue)
     {
-        $c = array('free' => 0, 'oncall' => 0, 'paused' => 0, 'offline' => 0);
+        $c = array('free' => 0, 'ringing' => 0, 'oncall' => 0, 'paused' => 0, 'offline' => 0);
         foreach ($agents as $a) {
             if (in_array((string) $queue, $a['queues'], true)) $c[$a['status']]++;
         }
