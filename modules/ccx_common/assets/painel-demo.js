@@ -43,8 +43,7 @@
       var r = rng(bucket * 131 + i * 7919);
       var roll = r();
       var status = OFFLINE[a[1]] ? 'offline' : roll < 0.52 ? 'oncall' : roll < 0.82 ? 'free' : 'paused';
-      if (a[1] === '1003') status = 'paused';
-      if (a[1] === '1006') status = 'ringing';          // uma agente com o ramal tocando           // sempre existe uma pausa longa para mostrar o alerta
+      if (a[1] === '1003') status = 'paused';           // sempre existe uma pausa longa para mostrar o alerta
       var queues = MEMBERS[a[1]];
       var q = pick(r, queues);
       var out = {
@@ -82,7 +81,7 @@
         if (q.kind === 'campaign') w.campaign = 'Renovação de contratos';
         waiting.push(w);
       }
-      var c = { free: 0, ringing: 0, oncall: 0, paused: 0, offline: 0 };
+      var c = { free: 0, oncall: 0, paused: 0, offline: 0 };
       agents.forEach(function (a) { if (a.queues.indexOf(q.number) !== -1) c[a.status]++; });
       return {
         number: q.number, name: q.name, kind: q.kind, waiting: waiting, agents: c,
