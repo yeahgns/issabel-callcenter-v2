@@ -251,7 +251,7 @@
   }
 
   function renderForm(c, o) {
-    var v = c || { name: '', queue: '', trunk: '', retries: 3, channels: 0, date_from: today(), date_to: plusDays(30), time_from: '08:00', time_to: '18:00', script: '', forms: [] };
+    var v = c || { amd: true, name: '', queue: '', trunk: '', retries: 3, channels: 0, date_from: today(), date_to: plusDays(30), time_from: '08:00', time_to: '18:00', script: '', forms: [] };
     var noQueues = !o.queues.length;
     var d = $('#cc-drawer');
     d.innerHTML =
@@ -279,6 +279,10 @@
           '<label class="field"><span>Ligações simultâneas</span><input type="number" name="channels" min="0" value="' + esc(v.channels) + '"><small>0 = sem limite</small></label></div>' +
         '<label class="field"><span>Saída</span><select name="trunk">' + opt(o.trunks, v.trunk) + '</select>' +
           '<small>Use as rotas de saída, a menos que esta campanha precise de um tronco específico.</small></label>' +
+        (c && c.context && c.context !== 'from-internal' && c.context !== 'ccx-amd'
+          ? '<p class="help">Esta campanha usa um contexto próprio (' + esc(c.context) + '), configurado fora desta tela. Ele será mantido.</p>'
+          : '<label class="opt amd-opt"><input type="checkbox" name="amd"' + (v.amd ? ' checked' : '') + '>' +
+              '<span><b>Detectar caixa postal</b><small>Quando a ligação é atendida, o PABX escuta os primeiros segundos. Se for gravação (caixa postal ou recado da operadora), desliga antes de chegar na agente, e o número volta para as tentativas. Atrasa cerca de 2 segundos a entrada na fila.</small></span></label>') +
 
         '<h3>Durante a ligação</h3>' +
         '<div class="field"><span>Formulário que a agente preenche</span>' +
@@ -301,6 +305,7 @@
       var data = {
         name: f.cname.value, date_from: f.date_from.value, date_to: f.date_to.value, time_from: f.time_from.value, time_to: f.time_to.value,
         queue: f.queue ? f.queue.value : '', retries: f.retries.value, channels: f.channels.value, trunk: f.trunk.value,
+        amd: f.amd ? (f.amd.checked ? 1 : 0) : null,
         script: textToHtml(f.script.value),
         forms: Array.prototype.map.call(f.querySelectorAll('input[name="forms"]:checked'), function (x) { return x.value; })
       };
