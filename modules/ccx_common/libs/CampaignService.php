@@ -138,6 +138,7 @@ class CcxCampaignService
             if ($c['totals']['total'] == 0) throw new Exception('Esta campanha ainda não tem contatos. Carregue a lista antes de ativar.');
             if ($c['totals']['pending'] == 0) throw new Exception('Não há números pendentes para discar nesta campanha.');
             if ($c['date_to'] < date('Y-m-d')) throw new Exception('O período da campanha já terminou. Edite as datas antes de ativar.');
+            if ($c['context'] === 'ccx-amd') $this->assertAmdLoaded();
         } elseif ($status !== 'I') {
             throw new Exception('Status inválido.');
         }
@@ -158,6 +159,24 @@ class CcxCampaignService
     }
 
     /* ---------------- auxiliares ---------------- */
+
+    /* Campanha com "Detectar caixa postal" entrega a ligação atendida no contexto ccx-amd.
+       Se o Asterisk não tiver esse contexto, ele recusa toda discagem e os contatos são gastos
+       sem tocar. Só bloqueia quando o Asterisk confirma que o contexto não existe. */
+    private function assertAmdLoaded()
+    {
+        try {
+            if (!class_exists('CcxRinging')) require_once dirname(__FILE__) . '/RingingService.php';
+            $r = new CcxRinging($this->cfg, ccx_pdo('cc', $this->cfg));
+            $out = $r->command('dialplan show ccx-amd');
+        } catch (Exception $e) {
+            return;   // AMI indisponível: não dá para conferir, não bloqueia
+        }
+        if (stripos($out, 'no existence') !== false) {
+            throw new Exception('A detecção de caixa postal não está carregada no Asterisk, e a campanha não conseguiria discar. ' .
+                'Rode "bash install.sh" no servidor ou desmarque "Detectar caixa postal" na campanha.');
+        }
+    }
 
     private function validate(array $in)
     {
