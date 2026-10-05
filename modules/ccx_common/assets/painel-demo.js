@@ -51,6 +51,7 @@
         since: status === 'offline' ? now - 3600 * (2 + i % 3) : start,
         since_exact: true, pause: null, onhold: false, call: null, queues: queues,
         login_sec: status === 'offline' ? 0 : Math.floor(sinceOpen * 0.9),
+        no_queue: a[1] === '1013',                      // uma agente com login mas sem fila
         session_start: status === 'offline' ? null : now - Math.floor(sinceOpen * (0.3 + (i % 4) * 0.15)),
         day_login_sec: status === 'offline' ? 3600 * (2 + i % 3) : Math.floor(sinceOpen * 0.9),
         today: status === 'offline' ? { calls: 4 + i % 3, talk_sec: 1500 + i * 60 }
