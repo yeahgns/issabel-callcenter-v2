@@ -35,6 +35,22 @@ function _moduleContent(&$smarty, $module_name)
     }
     $id = isset($_REQUEST['id']) && ctype_digit((string) $_REQUEST['id']) ? (int) $_REQUEST['id'] : 0;
 
+    // Resultados da campanha em CSV (abre direto no Excel em português).
+    if ($action === 'export') {
+        require_once 'modules/ccx_common/libs/ExportService.php';
+        try {
+            list($fname, $csv) = (new CcxExport(ccx_pdo('cc', $cfg)))->campaignCsv($id);
+        } catch (Exception $e) {
+            return ccx_json(array('error' => $e->getMessage()), 404);
+        }
+        if (!headers_sent()) {
+            header('Content-Type: text/csv; charset=UTF-8');
+            header("Content-Disposition: attachment; filename=\"" . str_replace('"', '', $fname) . "\"; filename*=UTF-8''" . rawurlencode($fname));
+            header('Cache-Control: no-store');
+        }
+        return $csv;
+    }
+
     try {
         $svc = new CcxCampaignService($cfg);
         switch ($action) {
