@@ -15,42 +15,42 @@
 .ccxc [hidden] { display: none !important; }
 .ccxc .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .ccxc :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
-:is(#ccx-campanhas, #ccx-formularios) h1, :is(#ccx-campanhas, #ccx-formularios) h2, :is(#ccx-campanhas, #ccx-formularios) h3 { font-family: var(--font); color: var(--ink); margin: 0; }
-:is(#ccx-campanhas, #ccx-formularios) p { margin: 0; }
-:is(#ccx-campanhas, #ccx-formularios) label { margin: 0; font-weight: inherit; }
-:is(#ccx-campanhas, #ccx-formularios) .field { margin: 0 0 16px; }
-:is(#ccx-campanhas, #ccx-formularios) .two .field { margin-bottom: 16px; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) h1, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) h2, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) h3 { font-family: var(--font); color: var(--ink); margin: 0; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) p { margin: 0; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) label { margin: 0; font-weight: inherit; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field { margin: 0 0 16px; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .two .field { margin-bottom: 16px; }
 
 /* topo */
 .ccxc .topbar { display: flex; align-items: center; gap: 16px; padding: 16px 28px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .ccxc .brand { margin-right: auto; }
-:is(#ccx-campanhas, #ccx-formularios) .brand h1 { font-size: 19px; font-weight: 700; letter-spacing: -.01em; line-height: 1.15; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .brand h1 { font-size: 19px; font-weight: 700; letter-spacing: -.01em; line-height: 1.15; }
 .ccxc .brand p { color: var(--muted); font-size: 13.5px; }
 .ccxc main { max-width: 1320px; margin: 0 auto; padding: 22px 28px 48px; }
 
 /* botões */
-:is(#ccx-campanhas, #ccx-formularios) .btn {
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px; margin: 0;
   padding: 7px 14px; border-radius: 8px; border: 1px solid transparent; background: var(--brand); color: #fff;
   font-size: 14px; font-weight: 600; line-height: 1.2; box-shadow: none; text-shadow: none; white-space: nowrap;
 }
-:is(#ccx-campanhas, #ccx-formularios) .btn:hover { background: var(--brand-ink); color: #fff; }
-:is(#ccx-campanhas, #ccx-formularios) .btn.ghost { background: var(--surface); color: var(--ink); border-color: var(--line); font-weight: 500; }
-:is(#ccx-campanhas, #ccx-formularios) .btn.ghost:hover { border-color: var(--faint); color: var(--ink); }
-:is(#ccx-campanhas, #ccx-formularios) .btn.danger { background: var(--lost); }
-:is(#ccx-campanhas, #ccx-formularios) .btn.danger:hover { background: #B7323B; }
-:is(#ccx-campanhas, #ccx-formularios) .btn.icon { width: 36px; padding: 0; font-size: 16px; }
-:is(#ccx-campanhas, #ccx-formularios) .btn:disabled { opacity: .55; cursor: wait; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .btn:hover { background: var(--brand-ink); color: #fff; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .btn.ghost { background: var(--surface); color: var(--ink); border-color: var(--line); font-weight: 500; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .btn.ghost:hover { border-color: var(--faint); color: var(--ink); }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .btn.danger { background: var(--lost); }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .btn.danger:hover { background: #B7323B; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .btn.icon { width: 36px; padding: 0; font-size: 16px; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .btn:disabled { opacity: .55; cursor: wait; }
 
 /* barra de filtros (mesmo .seg e busca do relatório) */
 .ccxc .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
 .ccxc .seg { display: inline-flex; background: var(--line-soft); border-radius: 9px; padding: 3px; gap: 2px; }
-:is(#ccx-campanhas, #ccx-formularios) .seg button { padding: 6px 12px; border: 0; border-radius: 7px; background: none; font-size: 13.5px; font-weight: 500; color: var(--muted); }
-:is(#ccx-campanhas, #ccx-formularios) .seg button:hover { color: var(--ink); }
-:is(#ccx-campanhas, #ccx-formularios) .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(15,39,64,.12); }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .seg button { padding: 6px 12px; border: 0; border-radius: 7px; background: none; font-size: 13.5px; font-weight: 500; color: var(--muted); }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .seg button:hover { color: var(--ink); }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(15,39,64,.12); }
 .ccxc .seg .n { color: var(--faint); margin-left: 4px; }
 .ccxc .search { flex: 0 1 280px; margin-left: auto; }
-:is(#ccx-campanhas, #ccx-formularios) .search input {
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .search input {
   width: 100%; min-height: 38px; padding: 8px 12px 8px 34px; border: 1px solid var(--line); border-radius: 8px; background-color: var(--surface);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238B9AAD' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-size: 16px; background-position: 11px center; box-shadow: none;
@@ -84,13 +84,13 @@
   position: fixed; top: 0; left: 0; width: 210px; z-index: 1050; padding: 6px;
   background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 12px 32px rgba(15,39,64,.14);
 }
-:is(#ccx-campanhas, #ccx-formularios) .menu button, :is(#ccx-campanhas, #ccx-formularios) .menu a {
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .menu button, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .menu a {
   display: block; width: 100%; text-align: left; padding: 9px 12px; border: 0; border-radius: 7px; background: none;
   font-size: 14px; color: var(--ink); text-decoration: none;
 }
-:is(#ccx-campanhas, #ccx-formularios) .menu button:hover, :is(#ccx-campanhas, #ccx-formularios) .menu a:hover { background: var(--paper); }
-:is(#ccx-campanhas, #ccx-formularios) .menu button:disabled { color: var(--faint); cursor: not-allowed; background: none; }
-:is(#ccx-campanhas, #ccx-formularios) .menu .danger { color: var(--lost); }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .menu button:hover, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .menu a:hover { background: var(--paper); }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .menu button:disabled { color: var(--faint); cursor: not-allowed; background: none; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .menu .danger { color: var(--lost); }
 .ccxc .empty { padding: 44px 20px; text-align: center; color: var(--muted); }
 .ccxc .empty b { display: block; color: var(--ink); font-size: 16px; margin-bottom: 4px; }
 .ccxc .empty div { margin-top: 16px; }
@@ -107,34 +107,34 @@
 }
 .ccxc .drawer form { display: flex; flex-direction: column; height: 100%; margin: 0; }
 .ccxc .d-head { display: flex; align-items: center; gap: 12px; padding: 16px 22px; border-bottom: 1px solid var(--line); }
-:is(#ccx-campanhas, #ccx-formularios) .d-head h2 { font-size: 18px; font-weight: 700; margin-right: auto; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .d-head h2 { font-size: 18px; font-weight: 700; margin-right: auto; }
 .ccxc .d-body { flex: 1; overflow-y: auto; padding: 18px 22px 24px; }
-:is(#ccx-campanhas, #ccx-formularios) .d-body h3 { font-size: 14px; font-weight: 700; margin: 22px 0 10px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .d-body h3 { font-size: 14px; font-weight: 700; margin: 22px 0 10px; padding-top: 16px; border-top: 1px solid var(--line-soft); }
 .ccxc .d-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px; border-top: 1px solid var(--line); background: #FAFBFD; }
 .ccxc .field { display: block; margin: 0 0 14px; }
 .ccxc .field > span { display: block; font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
 .ccxc .field > span em, .ccxc .field em { font-style: normal; color: var(--faint); font-weight: 400; }
 .ccxc .field small, .ccxc .help { display: block; font-size: 12.5px; color: var(--faint); margin-top: 5px; }
 .ccxc .help { margin: -4px 0 4px; }
-:is(#ccx-campanhas, #ccx-formularios) .field input, :is(#ccx-campanhas, #ccx-formularios) .field select, :is(#ccx-campanhas, #ccx-formularios) .field textarea {
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field input, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field select, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field textarea {
   display: block; width: 100%; max-width: 100%; min-height: 40px; margin: 0; padding: 8px 12px; height: auto;
   border: 1px solid var(--line); border-radius: 8px; background-color: var(--surface); color: var(--ink);
   font-size: 14.5px; line-height: 1.4; box-shadow: none;
 }
-:is(#ccx-campanhas, #ccx-formularios) .field select {
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field select {
   -webkit-appearance: none; appearance: none; padding-right: 32px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235A6B80' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-size: 14px; background-position: right 11px center;
 }
-:is(#ccx-campanhas, #ccx-formularios) .field textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
-:is(#ccx-campanhas, #ccx-formularios) .field input:focus, :is(#ccx-campanhas, #ccx-formularios) .field select:focus, :is(#ccx-campanhas, #ccx-formularios) .field textarea:focus {
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field input:focus, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field select:focus, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field textarea:focus {
   border-color: var(--brand); outline: none; box-shadow: 0 0 0 3px var(--brand-soft);
 }
 .ccxc .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .ccxc .checks { display: flex; flex-direction: column; gap: 8px; }
 .ccxc .check { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
 .ccxc .check:hover { border-color: var(--faint); }
-:is(#ccx-campanhas, #ccx-formularios) .check input { width: 16px; height: 16px; min-height: 0; margin: 2px 0 0; accent-color: var(--brand); flex: none; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .check input { width: 16px; height: 16px; min-height: 0; margin: 2px 0 0; accent-color: var(--brand); flex: none; }
 .ccxc .check b { display: block; font-weight: 600; font-size: 14px; }
 .ccxc .check em { display: block; font-style: normal; font-size: 12.5px; color: var(--muted); }
 body.ccxc-lock { overflow: hidden; }
@@ -145,7 +145,7 @@ body.ccxc-page { perspective: none !important; -webkit-perspective: none !import
 /* confirmação */
 .ccxc .cc-mback { display: grid; place-items: center; padding: 16px; }
 .ccxc .cc-modal { width: min(440px, 100%); background: var(--surface); border-radius: 14px; padding: 22px; box-shadow: 0 20px 48px rgba(15,39,64,.22); }
-:is(#ccx-campanhas, #ccx-formularios) .cc-modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .cc-modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
 .ccxc .cc-modal p { color: var(--muted); font-size: 14.5px; }
 .ccxc .cc-mfoot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
@@ -169,40 +169,40 @@ body.ccxc-page { perspective: none !important; -webkit-perspective: none !import
 /* ---------- blindagem contra o tema do Issabel ----------
    O tema (e personalizações dele) aplica padding, altura e box-sizing próprios em
    input/select/textarea/label. Travamos só tamanho e forma, pelo id da tela. */
-:is(#ccx-campanhas, #ccx-formularios), :is(#ccx-campanhas, #ccx-formularios) *, :is(#ccx-campanhas, #ccx-formularios) *::before, :is(#ccx-campanhas, #ccx-formularios) *::after { box-sizing: border-box !important; }
-:is(#ccx-campanhas, #ccx-formularios) .two > * { min-width: 0 !important; }
-:is(#ccx-campanhas, #ccx-formularios) .field input:not([type="checkbox"]):not([type="radio"]),
-:is(#ccx-campanhas, #ccx-formularios) .field select,
-:is(#ccx-campanhas, #ccx-formularios) .search input {
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes), :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) *, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) *::before, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) *::after { box-sizing: border-box !important; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .two > * { min-width: 0 !important; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field input:not([type="checkbox"]):not([type="radio"]),
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field select,
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .search input {
   width: 100% !important; max-width: 100% !important; min-width: 0 !important;
   height: 40px !important; min-height: 40px !important; margin: 0 !important;
   padding-top: 0 !important; padding-bottom: 0 !important; line-height: 38px !important;
   font-size: 14.5px !important; font-weight: 400 !important; float: none !important;
 }
-:is(#ccx-campanhas, #ccx-formularios) .field input:not([type="checkbox"]):not([type="radio"]),
-:is(#ccx-campanhas, #ccx-formularios) .field select { padding-left: 12px !important; }
-:is(#ccx-campanhas, #ccx-formularios) .field input:not([type="checkbox"]):not([type="radio"]) { padding-right: 12px !important; }
-:is(#ccx-campanhas, #ccx-formularios) .field select { padding-right: 32px !important; }
-:is(#ccx-campanhas, #ccx-formularios) .search input { padding-left: 34px !important; padding-right: 12px !important; }
-:is(#ccx-campanhas, #ccx-formularios) .field textarea {
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field input:not([type="checkbox"]):not([type="radio"]),
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field select { padding-left: 12px !important; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field input:not([type="checkbox"]):not([type="radio"]) { padding-right: 12px !important; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field select { padding-right: 32px !important; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .search input { padding-left: 34px !important; padding-right: 12px !important; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field textarea {
   width: 100% !important; max-width: 100% !important; min-width: 0 !important; height: auto !important; min-height: 110px !important;
   margin: 0 !important; padding: 9px 12px !important; line-height: 1.5 !important; font-size: 14.5px !important; float: none !important;
 }
-:is(#ccx-campanhas, #ccx-formularios) .check input { width: 16px !important; height: 16px !important; min-height: 0 !important; margin: 2px 0 0 !important; padding: 0 !important; }
-:is(#ccx-campanhas, #ccx-formularios) .field > span, :is(#ccx-campanhas, #ccx-formularios) label.field > span { font-weight: 500 !important; }
-:is(#ccx-campanhas, #ccx-formularios) .d-body { overflow-x: hidden !important; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .check input { width: 16px !important; height: 16px !important; min-height: 0 !important; margin: 2px 0 0 !important; padding: 0 !important; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .field > span, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) label.field > span { font-weight: 500 !important; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .d-body { overflow-x: hidden !important; }
 
 /* ---------- importação de contatos ---------- */
-:is(#ccx-campanhas, #ccx-formularios) .linkbtn { background: none; border: 0; padding: 0; color: var(--brand-ink); font-weight: 500; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .linkbtn { background: none; border: 0; padding: 0; color: var(--brand-ink); font-weight: 500; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .ccxc .imp-head { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
-:is(#ccx-campanhas, #ccx-formularios) .imp-head h2 { font-size: 18px; font-weight: 700; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .imp-head h2 { font-size: 18px; font-weight: 700; }
 .ccxc .imp-head p { font-size: 13.5px; color: var(--muted); }
 .ccxc .imp-pick { padding: 22px; }
-:is(#ccx-campanhas, #ccx-formularios) .drop {
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .drop {
   display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 40px 20px; margin: 0 0 18px;
   border: 2px dashed var(--line); border-radius: 12px; background: #FAFBFD; cursor: pointer; text-align: center; transition: .15s;
 }
-:is(#ccx-campanhas, #ccx-formularios) .drop:hover, :is(#ccx-campanhas, #ccx-formularios) .drop.over { border-color: var(--brand); background: var(--brand-soft); }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .drop:hover, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .drop.over { border-color: var(--brand); background: var(--brand-soft); }
 .ccxc .drop b { font-size: 16px; font-weight: 600; }
 .ccxc .drop > span:not(.btn) { color: var(--faint); font-size: 13px; }
 .ccxc .tips { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; display: grid; gap: 6px; }
@@ -212,10 +212,10 @@ body.ccxc-page { perspective: none !important; -webkit-perspective: none !import
 .ccxc .imp-summary b { color: var(--ink); }
 .ccxc .imp-grid { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr); gap: 16px; margin-bottom: 16px; align-items: start; }
 .ccxc .imp-settings, .ccxc .imp-stats { padding: 16px 18px; }
-:is(#ccx-campanhas, #ccx-formularios) .imp-settings h3, :is(#ccx-campanhas, #ccx-formularios) .imp-stats h3, :is(#ccx-campanhas, #ccx-formularios) .imp-table h3 { font-size: 14px; font-weight: 700; margin: 0 0 12px; }
-:is(#ccx-campanhas, #ccx-formularios) .imp-table h3 span { font-weight: 400; color: var(--faint); font-size: 12.5px; margin-left: 6px; }
-:is(#ccx-campanhas, #ccx-formularios) .opt { display: flex; gap: 9px; align-items: flex-start; margin: 0 0 10px; font-size: 14px; cursor: pointer; }
-:is(#ccx-campanhas, #ccx-formularios) .opt input, :is(#ccx-campanhas, #ccx-formularios) .imp-table th input { width: 16px !important; height: 16px !important; min-height: 0 !important; margin: 2px 0 0 !important; padding: 0 !important; accent-color: var(--brand); flex: none; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .imp-settings h3, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .imp-stats h3, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .imp-table h3 { font-size: 14px; font-weight: 700; margin: 0 0 12px; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .imp-table h3 span { font-weight: 400; color: var(--faint); font-size: 12.5px; margin-left: 6px; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .opt { display: flex; gap: 9px; align-items: flex-start; margin: 0 0 10px; font-size: 14px; cursor: pointer; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .opt input, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .imp-table th input { width: 16px !important; height: 16px !important; min-height: 0 !important; margin: 2px 0 0 !important; padding: 0 !important; accent-color: var(--brand); flex: none; }
 .ccxc .imp-stats.loading { opacity: .55; }
 .ccxc .sts { display: flex; flex-wrap: wrap; gap: 14px 30px; }
 .ccxc .st b { display: block; font-size: 24px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
@@ -235,7 +235,7 @@ body.ccxc-page { perspective: none !important; -webkit-perspective: none !import
 .ccxc .imp-table table { border-collapse: collapse; font-size: 13.5px; min-width: 100%; }
 .ccxc .imp-table th, .ccxc .imp-table td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line-soft); max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ccxc .imp-table th { background: #FAFBFD; border-bottom: 1px solid var(--line); vertical-align: top; }
-:is(#ccx-campanhas, #ccx-formularios) .imp-table th label { display: flex; gap: 7px; align-items: flex-start; flex-wrap: wrap; cursor: pointer; font-weight: 600; font-size: 13px; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .imp-table th label { display: flex; gap: 7px; align-items: flex-start; flex-wrap: wrap; cursor: pointer; font-weight: 600; font-size: 13px; }
 .ccxc .imp-table th em { flex-basis: 100%; font-style: normal; font-weight: 500; font-size: 11.5px; color: var(--faint); padding-left: 23px; }
 .ccxc .imp-table .is-phone { background: var(--brand-soft); }
 .ccxc .imp-table th.is-phone em { color: var(--brand-ink); }
@@ -250,11 +250,17 @@ body.ccxc-page { perspective: none !important; -webkit-perspective: none !import
 @keyframes ccxc-spin { to { transform: rotate(360deg); } }
 @media (max-width: 900px) { .ccxc .imp-grid { grid-template-columns: 1fr; } .ccxc .imp-head { flex-wrap: wrap; } }
 @media (prefers-reduced-motion: reduce) { .ccxc .spin { animation: none; } }
-:is(#ccx-campanhas, #ccx-formularios) .imp-table th label, :is(#ccx-campanhas, #ccx-formularios) .opt { color: var(--ink) !important; }
-:is(#ccx-campanhas, #ccx-formularios) .imp-table th.off label { color: var(--faint) !important; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .imp-table th label, :is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .opt { color: var(--ink) !important; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .imp-table th.off label { color: var(--faint) !important; }
 
 /* opção "Detectar caixa postal" no formulário da campanha */
-:is(#ccx-campanhas, #ccx-formularios) .amd-opt { padding: 12px; margin: 4px 0 16px; border: 1px solid var(--line); border-radius: 10px; background: #FAFBFD; }
-:is(#ccx-campanhas, #ccx-formularios) .amd-opt b { display: block; font-weight: 600; font-size: 14px; color: var(--ink); }
-:is(#ccx-campanhas, #ccx-formularios) .amd-opt small { display: block; font-size: 12.5px; color: var(--muted); margin-top: 3px; line-height: 1.45; font-weight: 400; }
-:is(#ccx-campanhas, #ccx-formularios) .amd-opt input { width: 16px !important; height: 16px !important; min-height: 0 !important; margin: 2px 0 0 !important; padding: 0 !important; accent-color: var(--brand); flex: none; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .amd-opt { padding: 12px; margin: 4px 0 16px; border: 1px solid var(--line); border-radius: 10px; background: #FAFBFD; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .amd-opt b { display: block; font-weight: 600; font-size: 14px; color: var(--ink); }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .amd-opt small { display: block; font-size: 12.5px; color: var(--muted); margin-top: 3px; line-height: 1.45; font-weight: 400; }
+:is(#ccx-campanhas, #ccx-formularios, #ccx-agentes) .amd-opt input { width: 16px !important; height: 16px !important; min-height: 0 !important; margin: 2px 0 0 !important; padding: 0 !important; accent-color: var(--brand); flex: none; }
+
+/* tela de Agentes */
+#ccx-agentes .ca-st { display: flex; flex-direction: column; gap: 2px; }
+#ccx-agentes .ca-st b { color: var(--ok); font-weight: 600; }
+#ccx-agentes .ca-day { font-size: 12.5px; color: var(--faint); }
+#ccx-agentes .ca-fixed { margin: 0; padding: 9px 12px; border-radius: 8px; background: var(--paper); font-weight: 600; }
