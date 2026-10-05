@@ -268,6 +268,8 @@
     } else if (a.since) {
       h += '<span class="sub">saiu às ' + hm(a.since) + '</span>';
     }
+    // Agente com login que não está em nenhuma fila do call center: aparece, mas avisa.
+    if (a.no_queue) h += '<span class="sub nq">Sem fila do call center: não recebe ligações</span>';
     return h;
   }
 
