@@ -241,3 +241,6 @@
 #ccx-painel .btn:hover, #ccx-painel .btn:focus { color: #fff; }
 #ccx-painel .btn.ghost:hover, #ccx-painel .btn.ghost:focus { color: var(--ink); }
 #ccx-painel .btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
+/* agente com login fora de qualquer fila do call center */
+.ccx .state .sub.nq { color: var(--warn); font-weight: 500; white-space: normal; }
