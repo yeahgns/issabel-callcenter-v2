@@ -63,12 +63,9 @@ CREATE TABLE IF NOT EXISTS ccx_attempt (
     CONSTRAINT ccx_attempt_agent_fk FOREIGN KEY (id_agent) REFERENCES agent (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Pausa usada enquanto a agente trabalha uma lista preview, para a fila não
--- entregar ligações automáticas para ela nesse meio tempo.
-INSERT INTO `break` (name, description, status, tipo)
-SELECT 'Preview', 'Trabalhando lista preview (Call Center Plus)', 'A', 'B'
-FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM `break` WHERE name = 'Preview');
+-- Uma versão anterior criava a pausa "Preview", para um modo preview que não foi implementado.
+-- Ela aparecia na lista de pausas do console sem servir para nada: fica desativada.
+UPDATE `break` SET status = 'I' WHERE name = 'Preview' AND description LIKE '%Call Center Plus%';
 
 -- Proteção: campanha preview não pode ser ativada (estatus = 'A'), senão o
 -- discador automático começaria a discar a lista inteira sozinho.
