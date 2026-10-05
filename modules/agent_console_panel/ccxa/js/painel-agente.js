@@ -181,6 +181,94 @@
     wireLongs(el.preview);
   }
 
+  /* ---------- janelas de pausa e transferência ---------- */
+  function openModal(html) {
+    $('#ccxa-modal').innerHTML = html;
+    $('#ccxa-mback').hidden = false;
+    var f = $('#ccxa-modal').querySelector('input:not([disabled]), button[data-mok]'); if (f) f.focus();
+  }
+  function closeModal() { $('#ccxa-mback').hidden = true; $('#ccxa-modal').innerHTML = ''; }
+
+  // A pausa "Preview" foi criada por uma versão antiga do add-on, para um modo que não existe.
+  function pauseOptions() {
+    return Array.prototype.map.call($('#break_select').options, function (o) { return { id: o.value, label: o.textContent.trim() }; })
+      .filter(function (o) { return o.id !== '' && !/^preview\b/i.test(o.label); });
+  }
+
+  function openPause() {
+    var opts = pauseOptions();
+    if (!opts.length) { openModal('<h2 id="ccxa-mtitle">Entrar em pausa</h2><p class="m-sub">Nenhum tipo de pausa cadastrado. Peça ao supervisor para cadastrar em Call Center, Breaks.</p><div class="m-foot"><button type="button" class="dr-btn ghost" data-mclose>Fechar</button></div>'); return; }
+    openModal('<h2 id="ccxa-mtitle">Entrar em pausa?</h2>' +
+      '<p class="m-sub">Enquanto estiver em pausa, a fila não entrega ligações para você.</p>' +
+      '<div class="m-list" role="radiogroup" aria-label="Tipo de pausa">' + opts.map(function (o, i) {
+        var parts = o.label.split(' - '), name = parts.shift(), desc = parts.join(' - ');
+        return '<label class="m-opt"><input type="radio" name="ccxa-pause" value="' + esc(o.id) + '"' + (i === 0 ? ' checked' : '') + '>' +
+          '<span><b>' + esc(name) + '</b>' + (desc ? '<em>' + esc(desc) + '</em>' : '') + '</span></label>';
+      }).join('') + '</div>' +
+      '<div class="m-foot"><button type="button" class="dr-btn ghost" data-mclose>Cancelar</button><button type="button" class="dr-btn" data-mok>Entrar em pausa</button></div>');
+    $('#ccxa-modal [data-mok]').addEventListener('click', function () {
+      var sel = $('#ccxa-modal input[name="ccxa-pause"]:checked'); if (!sel) return;
+      $('#break_select').value = sel.value;
+      closeModal();
+      window.do_break();    // o console pausa; a tela muda quando o estado chegar
+    });
+  }
+
+  function openTransfer() {
+    var mine = (window.CCXA_CFG && CCXA_CFG.agent_name) || '';
+    var agents = Array.prototype.map.call($('#transfer_agent').options, function (o) {
+      var t = o.textContent.trim(), m = t.match(/^\s*\S+\/(\S+)\s*-\s*(.+)$/);
+      return { value: o.value, number: m ? m[1] : '', name: m ? m[2] : t };
+    }).filter(function (a) { return a.value && /\//.test(a.value); });
+    openModal('<h2 id="ccxa-mtitle">Transferir ligação</h2>' +
+      '<div class="m-seg" role="tablist"><button type="button" role="tab" data-tt="agent" aria-selected="true">Para outra agente</button>' +
+        '<button type="button" role="tab" data-tt="ext" aria-selected="false">Para um ramal ou número</button></div>' +
+      '<div data-tp="agent"><div class="m-list" id="ccxa-tlist"><p class="m-sub">Conferindo quem está no console…</p></div></div>' +
+      '<div data-tp="ext" hidden><label class="df"><span>Ramal ou número</span><input type="text" id="ccxa-text" inputmode="tel" autocomplete="off" placeholder="Ex.: 205 ou 11999998888"></label>' +
+        '<p class="m-sub">A ligação vai direto para o destino, sem você falar com ele antes.</p></div>' +
+      '<p class="dr-msg err" id="ccxa-terr" role="alert"></p>' +
+      '<div class="m-foot"><button type="button" class="dr-btn ghost" data-mclose>Cancelar</button><button type="button" class="dr-btn" data-mok>Transferir</button></div>');
+    var mode = 'agent';
+    Array.prototype.forEach.call($('#ccxa-modal').querySelectorAll('[data-tt]'), function (t) {
+      t.addEventListener('click', function () {
+        mode = t.getAttribute('data-tt');
+        Array.prototype.forEach.call($('#ccxa-modal').querySelectorAll('[data-tt]'), function (x) { x.setAttribute('aria-selected', String(x === t)); });
+        Array.prototype.forEach.call($('#ccxa-modal').querySelectorAll('[data-tp]'), function (p) { p.hidden = p.getAttribute('data-tp') !== mode; });
+        $('#ccxa-terr').textContent = '';
+        if (mode === 'ext') $('#ccxa-text').focus();
+      });
+    });
+    // Quem está com o console aberto pode receber; as outras aparecem, mas não dá para escolher.
+    apiGet('online').then(function (j) { return j.online || []; }, function () { return null; }).then(function (online) {
+      var box = $('#ccxa-tlist'); if (!box) return;
+      if (!agents.length) { box.innerHTML = '<p class="m-sub">Não há outras agentes cadastradas.</p>'; return; }
+      var on = function (a) { return online === null || online.indexOf(a.value) !== -1; };
+      agents.sort(function (a, b) { return (on(b) - on(a)) || a.name.localeCompare(b.name, 'pt-BR'); });
+      box.innerHTML = agents.map(function (a) {
+        var ok = on(a);
+        return '<label class="m-opt' + (ok ? '' : ' off') + '"><input type="radio" name="ccxa-tagent" value="' + esc(a.value) + '"' + (ok ? '' : ' disabled') + '>' +
+          '<span><b>' + esc(a.name) + '</b><em>' + (a.number ? 'Ramal ' + esc(a.number) + ', ' : '') + (online === null ? 'situação desconhecida' : ok ? 'no console' : 'fora do console') + '</em></span>' +
+          '<i class="m-dot' + (ok ? ' on' : '') + '" aria-hidden="true"></i></label>';
+      }).join('') + (online && !agents.some(on) ? '<p class="m-sub">Nenhuma outra agente está no console agora.</p>' : '');
+    });
+    $('#ccxa-modal [data-mok]').addEventListener('click', function () {
+      var err = $('#ccxa-terr');
+      if (mode === 'agent') {
+        var sel = $('#ccxa-modal input[name="ccxa-tagent"]:checked');
+        if (!sel) { err.textContent = 'Escolha a agente que vai receber a ligação.'; return; }
+        $('#transfer_type_agent').checked = true;
+        $('#transfer_agent').value = sel.value;
+      } else {
+        var dest = $('#ccxa-text').value.replace(/[^\d*#]/g, '');
+        if (!dest) { err.textContent = 'Digite o ramal ou o número de destino.'; return; }
+        $('#transfer_type_blind').checked = true;
+        $('#transfer_extension').value = dest;
+      }
+      closeModal();
+      window.do_transfer();   // o console transfere
+    });
+  }
+
   /* ---------- ligações de hoje ---------- */
   function hhmm(ts) { var d = new Date(ts * 1000); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
   function durTxt(s) { if (s == null) return ''; s = Math.max(0, s | 0); return s < 60 ? s + 's' : Math.floor(s / 60) + 'min' + (s % 60 ? ' ' + pad2(s % 60) + 's' : ''); }
@@ -477,6 +565,7 @@
         '<p class="panel-sub">Clique numa ligação para ver a ficha e completar o registro, mesmo depois que o cliente desligou.</p>' +
         '<div class="h-list" id="ccxa-hlist"><p class="h-empty">Carregando…</p></div>' +
       '</section>' +
+      '<div class="ccxa-mback" id="ccxa-mback" hidden><div class="ccxa-modal" id="ccxa-modal" role="dialog" aria-modal="true" aria-labelledby="ccxa-mtitle"></div></div>' +
       '<div class="ccxa-dback" id="ccxa-dback" hidden></div>' +
       '<aside class="ccxa-drawer" id="ccxa-drawer" hidden role="dialog" aria-modal="true" aria-label="Ligação"></aside>';
     area.appendChild(root);
@@ -509,7 +598,21 @@
     relabel(ENGINE.btnHold, 'Colocar em espera');
     relabel('#btn_transfer', 'Transferir');
     relabel(ENGINE.btnSave, 'Salvar registro');
-    el.break.addEventListener('click', function () { clickEngine(ENGINE.btnBreak); });
+    el.break.addEventListener('click', function () {
+      if (S.key === 'break' || !window.do_break || !$('#break_select')) { clickEngine(ENGINE.btnBreak); return; }
+      openPause();
+    });
+    // Transferência: intercepta o clique antes de chegar ao botão do console (fase de captura no
+    // contêiner), para abrir a nossa janela em vez da antiga. Quem transfere continua sendo o console.
+    var thost = $('#ccxa-host-transfer');
+    if (thost) thost.addEventListener('click', function (e) {
+      if (!window.do_transfer || !$('#transfer_agent')) return;   // estrutura inesperada: deixa a antiga
+      e.preventDefault(); e.stopPropagation();
+      var b = $('#btn_transfer'); if (b && b.disabled) return;
+      openTransfer();
+    }, true);
+    $('#ccxa-mback').addEventListener('click', function (e) { if (e.target === this || e.target.closest('[data-mclose]')) closeModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('#ccxa-mback').hidden) closeModal(); });
     el.logout.addEventListener('click', function () {
       if (confirm('Encerrar a sessão do console?')) clickEngine(ENGINE.btnLogout);
     });
