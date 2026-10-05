@@ -18,8 +18,8 @@ ROOTPW=$(grep -E '^mysqlrootpwd=' /etc/issabel.conf 2>/dev/null | cut -d= -f2- |
 say "Instalando Call Center Plus $VERSION"
 
 say "Copiando módulos para $WEB"
-/bin/cp -rf modules/ccx_common modules/ccx_painel modules/ccx_campanhas modules/ccx_formularios modules/ccx_agentes "$WEB/"
-chown -R asterisk:asterisk "$WEB/ccx_common" "$WEB/ccx_painel" "$WEB/ccx_campanhas" "$WEB/ccx_formularios" "$WEB/ccx_agentes"
+/bin/cp -rf modules/ccx_common modules/ccx_painel modules/ccx_campanhas modules/ccx_formularios modules/ccx_agentes modules/ccx_pausas "$WEB/"
+chown -R asterisk:asterisk "$WEB/ccx_common" "$WEB/ccx_painel" "$WEB/ccx_campanhas" "$WEB/ccx_formularios" "$WEB/ccx_agentes" "$WEB/ccx_pausas"
 
 say "Instalando a casca do Console do Agente (painel ccxa)"
 # O agent_console injeta automaticamente todo .js de panels/*/js/ e chama a classe
@@ -51,7 +51,7 @@ if [ "$VT" = "varchar" ]; then
     MYSQL_PWD="$ROOTPW" mysql -uroot call_center -e "ALTER TABLE call_attribute MODIFY value TEXT NOT NULL"
 fi
 
-say "Registrando os menus Call Center > Painel, Campanhas, Formulários e Agentes"
+say "Registrando os menus Call Center > Painel, Campanhas, Formulários, Agentes e Pausas"
 mkdir -p "$SHARE"
 /bin/cp -f menu.xml VERSION "$SHARE/"
 issabel-menumerge "$SHARE/menu.xml"
