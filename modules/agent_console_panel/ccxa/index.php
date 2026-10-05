@@ -30,6 +30,20 @@ class Panel_Ccxa
         return json_encode($data, JSON_UNESCAPED_UNICODE);
     }
 
+    /* action=ccxa_online -> canais das agentes com o console aberto agora (para a transferência). */
+    public static function handleJSON_online($module_name, $smarty, $local_templates_dir, $oPaloConsola, $estado)
+    {
+        try {
+            require_once 'modules/ccx_common/libs/bootstrap.php';
+            require_once 'modules/ccx_common/libs/sessions.php';
+            $online = array();
+            foreach (ccx_agent_sessions(ccx_pdo('cc')) as $chan => $s) if (!empty($s['session_start'])) $online[] = $chan;
+            return self::out(array('ok' => true, 'online' => $online));
+        } catch (Exception $e) {
+            return self::out(array('ok' => false, 'error' => $e->getMessage()));
+        }
+    }
+
     /* action=ccxa_history */
     public static function handleJSON_history($module_name, $smarty, $local_templates_dir, $oPaloConsola, $estado)
     {
