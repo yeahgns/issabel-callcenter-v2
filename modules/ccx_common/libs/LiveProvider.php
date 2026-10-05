@@ -50,7 +50,17 @@ class CcxLiveProvider
         }
         $consola->desconectarTodo();
 
+        $this->addAgentsWithoutQueue($agents);
         $this->attachSessions($agents);
+        // Sem fila do call center o discador não informa o estado: logada no console = Disponível.
+        foreach ($agents as &$ag) {
+            if (!empty($ag['no_queue']) && !empty($ag['session_start'])) {
+                $ag['status'] = 'free';
+                $ag['since'] = $ag['session_start'];
+                $ag['since_exact'] = true;
+            }
+        }
+        unset($ag);
         $this->trackSince($agents);
         foreach ($queues as $num => $q) {
             $queues[$num]['agents'] = $this->countStates($agents, $num);
@@ -269,6 +279,33 @@ class CcxLiveProvider
         return $out;
     }
 
+    /*
+     * A lista do callcenter é montada fila por fila: agente com login que não é membro de
+     * nenhuma fila do call center (entrada ou de campanha) ficaria invisível no painel.
+     * Completamos com todas as agentes ativas, marcadas como "sem fila".
+     */
+    private function addAgentsWithoutQueue(array &$agents)
+    {
+        try {
+            $rows = ccx_pdo('cc', $this->cfg)->query("SELECT type, number, name FROM agent WHERE estatus = 'A' ORDER BY number")->fetchAll();
+        } catch (Exception $e) {
+            $this->warn('Lista completa de agentes indisponível: ' . $e->getMessage());
+            return;
+        }
+        foreach ($agents as &$a) $a['no_queue'] = false;
+        unset($a);
+        foreach ($rows as $r) {
+            $chan = $r['type'] . '/' . $r['number'];
+            if (isset($agents[$chan])) continue;
+            $agents[$chan] = array(
+                'id' => $chan, 'name' => $r['name'] !== '' ? $r['name'] : $r['number'], 'number' => $r['number'],
+                'status' => 'offline', 'since' => null, 'since_exact' => false, 'pause' => null, 'onhold' => false,
+                'call' => null, 'queues' => array(), 'login_sec' => 0, 'today' => array('calls' => 0, 'talk_sec' => 0),
+                'no_queue' => true,
+            );
+        }
+    }
+
     /* Sessão atual e total logado hoje, pela tabela audit (mesma conta do console). */
     private function attachSessions(array &$agents)
     {
@@ -282,7 +319,7 @@ class CcxLiveProvider
         }
         foreach ($agents as $chan => &$a) {
             $m = isset($map[$chan]) ? $map[$chan] : null;
-            $a['session_start'] = ($m && $a['status'] !== 'offline') ? $m['session_start'] : null;
+            $a['session_start'] = ($m && ($a['status'] !== 'offline' || !empty($a['no_queue']))) ? $m['session_start'] : null;
             $a['day_login_sec'] = $m ? $m['day_sec'] : 0;
         }
         unset($a);
