@@ -18,8 +18,8 @@ ROOTPW=$(grep -E '^mysqlrootpwd=' /etc/issabel.conf 2>/dev/null | cut -d= -f2- |
 say "Instalando Call Center Plus $VERSION"
 
 say "Copiando módulos para $WEB"
-/bin/cp -rf modules/ccx_common modules/ccx_painel modules/ccx_campanhas modules/ccx_formularios "$WEB/"
-chown -R asterisk:asterisk "$WEB/ccx_common" "$WEB/ccx_painel" "$WEB/ccx_campanhas" "$WEB/ccx_formularios"
+/bin/cp -rf modules/ccx_common modules/ccx_painel modules/ccx_campanhas modules/ccx_formularios modules/ccx_agentes "$WEB/"
+chown -R asterisk:asterisk "$WEB/ccx_common" "$WEB/ccx_painel" "$WEB/ccx_campanhas" "$WEB/ccx_formularios" "$WEB/ccx_agentes"
 
 say "Instalando a casca do Console do Agente (painel ccxa)"
 # O agent_console injeta automaticamente todo .js de panels/*/js/ e chama a classe
@@ -51,7 +51,7 @@ if [ "$VT" = "varchar" ]; then
     MYSQL_PWD="$ROOTPW" mysql -uroot call_center -e "ALTER TABLE call_attribute MODIFY value TEXT NOT NULL"
 fi
 
-say "Registrando os menus Call Center > Painel, Campanhas e Formulários"
+say "Registrando os menus Call Center > Painel, Campanhas, Formulários e Agentes"
 mkdir -p "$SHARE"
 /bin/cp -f menu.xml VERSION "$SHARE/"
 issabel-menumerge "$SHARE/menu.xml"
@@ -76,9 +76,15 @@ cat >> "$CUSTOM" <<'DIALPLAN'
 ; >>> ccx-amd (Call Center Plus) - gerado pelo install.sh, não edite entre estas marcas
 [ccx-amd]
 exten => _X.,1,NoOp(CCX: verificando caixa postal antes da fila ${EXTEN})
- same => n,AMD()
+; AMD(silêncio inicial, saudação, silêncio após saudação, análise total, palavra mínima,
+;     silêncio entre palavras, máximo de palavras, limiar de silêncio, palavra máxima) em ms.
+; Calibrado para o Brasil: até 5 palavras e 2,5 s de fala ("Alô, quem fala?" é pessoa).
+; O recado da operadora é uma frase longa e continua passando desses limites.
+ same => n,AMD(2500,2500,800,5000,100,50,5,256,5000)
  same => n,NoOp(CCX AMD: ${AMDSTATUS} ${AMDCAUSE})
- same => n,GotoIf($["${AMDSTATUS}" = "MACHINE"]?gravacao)
+; Só desliga quando o AMD ouviu fala de gravação (LONGGREETING, MAXWORDS...). Silêncio no começo
+; (INITIALSILENCE) é ambíguo, costuma ser gente que atendeu calada: segue para a fila.
+ same => n,GotoIf($[ "${AMDSTATUS}" = "MACHINE" & "${AMDCAUSE:0:14}" != "INITIALSILENCE" ]?gravacao)
  same => n,Goto(from-internal,${EXTEN},1)
  same => n(gravacao),Hangup(16)
 ; <<< ccx-amd (Call Center Plus)
@@ -96,7 +102,7 @@ if command -v asterisk >/dev/null && asterisk -rx "core show version" >/dev/null
     asterisk -rx "dialplan reload" >/dev/null 2>&1 || true
     CTX=$(asterisk -rx "dialplan show ccx-amd" 2>/dev/null || true)
     case "$CTX" in
-        *"AMD()"*) echo "   Detecção de caixa postal carregada no Asterisk." ;;
+        *"AMD("*) echo "   Detecção de caixa postal carregada no Asterisk." ;;
         *) echo "   ERRO: o Asterisk não carregou o contexto ccx-amd. Campanhas com \"Detectar caixa postal\" não vão discar."
            echo "         Confira: asterisk -rx \"dialplan show ccx-amd\"" ;;
     esac
