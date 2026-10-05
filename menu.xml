@@ -5,5 +5,6 @@
     <menuitem menuid="ccx_campanhas" desc="Campanhas" parent="call_center" module="yes" link="" order="1"></menuitem>
     <menuitem menuid="ccx_formularios" desc="Formulários" parent="call_center" module="yes" link="" order="2"></menuitem>
     <menuitem menuid="ccx_agentes" desc="Agentes" parent="call_center" module="yes" link="" order="3"></menuitem>
+    <menuitem menuid="ccx_pausas" desc="Pausas" parent="call_center" module="yes" link="" order="4"></menuitem>
   </menulist>
 </module>
