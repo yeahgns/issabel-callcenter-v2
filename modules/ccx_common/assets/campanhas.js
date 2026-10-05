@@ -156,7 +156,7 @@
           '<div class="menu" hidden>' +
             '<button type="button" data-act="edit" data-id="' + x.id + '">Editar</button>' +
             '<button type="button" data-act="import" data-id="' + x.id + '">Carregar contatos</button>' +
-            '<a href="' + esc(LEGACY + '&action=csv_data&id_campaign=' + x.id + '&rawmode=yes') + '">Baixar resultados</a>' +
+            '<a href="' + esc(API + '&action=export&id=' + x.id) + '" download>Baixar resultados</a>' +
             '<button type="button" data-act="purge" data-id="' + x.id + '"' + (t.pending ? '' : ' disabled') + '>Limpar pendentes</button>' +
             '<button type="button" class="danger" data-act="delete" data-id="' + x.id + '">Excluir</button>' +
           '</div></div></div>' +
